@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../providers/purchase_order_provider.dart';
 import '../theme/app_colors.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  final currencyFormatter = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch PO setelah frame pertama
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<PurchaseOrderProvider>(context, listen: false)
+          .fetchOrders(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,10 +36,8 @@ class DashboardPage extends StatelessWidget {
         final pendingPO = provider.orders
             .where((po) => po.status.toLowerCase() == 'pending')
             .length;
-        final totalSuppliers = provider.orders
-            .map((po) => po.supplierId)
-            .toSet()
-            .length; // jumlah supplier unik
+        final totalSuppliers =
+            provider.orders.map((po) => po.supplierId).toSet().length;
 
         final recentPO = provider.orders.reversed.take(5).toList();
 
@@ -39,14 +59,14 @@ class DashboardPage extends StatelessWidget {
                     children: [
                       // Logo di kiri
                       Image.asset(
-                        "assets/logo-bgn.png", // ganti sesuai path logo kamu
+                        "assets/logo-bgn.png",
                         height: 52,
                         width: 52,
                       ),
                       const SizedBox(width: 12),
 
                       // Teks di tengah
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           "Dapur BGN Ciawigebang",
                           textAlign: TextAlign.center,
@@ -72,9 +92,10 @@ class DashboardPage extends StatelessWidget {
                       "Suplier CV. ALi Jaya Logistik",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(255, 45, 44, 44)),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 45, 44, 44),
+                      ),
                     ),
                   ),
                 ),
@@ -82,19 +103,23 @@ class DashboardPage extends StatelessWidget {
 
                 // Summary Cards
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSummaryCard(
-                      title: "Total PO",
-                      value: totalPO.toString(),
-                      color: Colors.blueAccent,
-                      icon: Icons.list_alt,
+                    Expanded(
+                      child: _buildSummaryCard(
+                        title: "Total PO",
+                        value: totalPO.toString(),
+                        color: Colors.blueAccent,
+                        icon: Icons.list_alt,
+                      ),
                     ),
-                    _buildSummaryCard(
-                      title: "Pending PO",
-                      value: pendingPO.toString(),
-                      color: Colors.orange,
-                      icon: Icons.pending_actions,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildSummaryCard(
+                        title: "Pending PO",
+                        value: pendingPO.toString(),
+                        color: Colors.orange,
+                        icon: Icons.pending_actions,
+                      ),
                     ),
                   ],
                 ),
@@ -133,9 +158,11 @@ class DashboardPage extends StatelessWidget {
                                   child: const Icon(Icons.list_alt,
                                       color: AppColors.primary),
                                 ),
-                                title: Text(po.orderNumber,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold)),
+                                title: Text(
+                                  po.orderNumber,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -143,10 +170,11 @@ class DashboardPage extends StatelessWidget {
                                   ],
                                 ),
                                 trailing: Text(
-                                  "Rp ${po.total.toStringAsFixed(0)}",
+                                  currencyFormatter.format(po.total),
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87),
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
                                 ),
                               ),
                             );
@@ -166,10 +194,8 @@ class DashboardPage extends StatelessWidget {
     required String value,
     required Color color,
     required IconData icon,
-    double width = 160,
   }) {
     return Container(
-      width: width,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color,
@@ -190,7 +216,10 @@ class DashboardPage extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-                fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           Text(
             title,
