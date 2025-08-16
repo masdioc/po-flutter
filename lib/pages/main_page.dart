@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../pages/dashboard_page.dart';
 import '../pages/purchase_order_page.dart';
-// import '../pages/add_purchase_order_page.dart' as add_po;
 import '../pages/profile_page.dart';
-import '../providers/auth_provider.dart';
 import '../providers/purchase_order_provider.dart';
 import '../theme/app_colors.dart';
 
@@ -16,9 +15,11 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
+
   final List<Widget> _pages = [
-    const PurchaseOrderPage(), // Tab pertama: PO
-    const ProfilePage(), // Tab kedua: Profile
+    const DashboardPage(),
+    const PurchaseOrderPage(),
+    const AccountPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -27,22 +28,50 @@ class _MainNavigationState extends State<MainNavigation> {
     });
   }
 
+  BottomNavigationBarItem _buildNavItem(
+      IconData icon, String label, bool isSelected) {
+    return BottomNavigationBarItem(
+      icon: Icon(icon, size: isSelected ? 28 : 24),
+      label: label,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => PurchaseOrderProvider(),
       child: Scaffold(
-        body: _pages[_selectedIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: AppColors.primary,
-          selectedItemColor: Colors.white,
-          unselectedItemColor: AppColors.textSecondary,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.list), label: "PO"),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-          ],
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
+        body: SafeArea(child: _pages[_selectedIndex]),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.primary, AppColors.primary.withOpacity(0.85)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: BottomNavigationBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            selectedItemColor: Colors.white,
+            unselectedItemColor: AppColors.textSecondary,
+            showUnselectedLabels: true,
+            type: BottomNavigationBarType.fixed,
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+            items: [
+              _buildNavItem(Icons.dashboard, "Dashboard", _selectedIndex == 0),
+              _buildNavItem(Icons.list_alt, "PO", _selectedIndex == 1),
+              _buildNavItem(Icons.person, "Profile", _selectedIndex == 2),
+            ],
+          ),
         ),
       ),
     );
