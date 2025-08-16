@@ -1,4 +1,4 @@
-package com.example.login_profile_app
+package com.example.po_app
 
 import io.flutter.embedding.android.FlutterActivity
 

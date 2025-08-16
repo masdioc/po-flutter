@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:login_profile_app/providers/purchase_order_provider.dart';
+import 'package:po_app/providers/purchase_order_provider.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'pages/splash_screen.dart';
+import 'services/check_connection.dart'; // bikin file baru
 
 void main() {
   runApp(
@@ -10,6 +11,8 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => PurchaseOrderProvider()),
+        ChangeNotifierProvider(
+            create: (_) => ConnectionService()), // ✅ Tambah koneksi global
       ],
       child: const MyApp(),
     ),
@@ -23,9 +26,38 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Login Profile App',
+      title: 'PO App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const SplashScreen(),
+      home: Stack(
+        children: [
+          const SplashScreen(),
+          Consumer<ConnectionService>(
+            builder: (context, connection, child) {
+              if (!connection.isOnline) {
+                return Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    color: Colors.red,
+                    padding: const EdgeInsets.all(8),
+                    child: const Text(
+                      "Tidak ada koneksi internet",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic, // kalau mau miring
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      ),
     );
   }
 }

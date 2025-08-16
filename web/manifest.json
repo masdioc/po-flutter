@@ -1,6 +1,6 @@
 {
-    "name": "login_profile_app",
-    "short_name": "login_profile_app",
+    "name": "po_app",
+    "short_name": "po_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

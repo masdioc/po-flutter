@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:login_profile_app/pages/payment_page.dart';
+import 'package:po_app/pages/payment_page.dart';
 import '../models/purchase_order.dart';
 
 class PurchaseOrderDetailPage extends StatefulWidget {

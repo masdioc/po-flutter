@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:login_profile_app/pages/purchase_order_detail_page.dart';
+import 'package:po_app/pages/purchase_order_detail_page.dart';
 import 'package:provider/provider.dart';
 import '../providers/purchase_order_provider.dart';
 import '../theme/app_colors.dart';

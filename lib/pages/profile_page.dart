@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:login_profile_app/pages/change_password_page.dart';
+import 'package:po_app/pages/change_password_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 

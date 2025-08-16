@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/purchase_order.dart';
 import '../services/payment_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,8 +19,23 @@ class _PaymentPageState extends State<PaymentPage> {
   String? selectedMethod;
   String note = "";
   bool isLoading = false;
+  File? proofFile;
+
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickProof() async {
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+    if (pickedFile != null) {
+      setState(() {
+        proofFile = File(pickedFile.path);
+      });
+    }
+  }
 
   Future<void> _processPayment() async {
+    if (selectedMethod == null) return;
+
     setState(() => isLoading = true);
 
     try {
@@ -35,20 +52,17 @@ class _PaymentPageState extends State<PaymentPage> {
         method: selectedMethod!,
         note: note,
         token: token,
+        proofFile: proofFile,
       );
 
       if (result["success"] == true) {
         widget.po.status = "paid"; // update status
-        // Update status PO di memory menjadi 'paid'
-        setState(() {
-          widget.po.status = "paid";
-        });
+        setState(() => widget.po.status = "paid");
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result["message"] ?? "Pembayaran berhasil")),
         );
 
-        // Kirim PO yang diperbarui ke halaman sebelumnya
         Navigator.pop(context, widget.po);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -77,12 +91,10 @@ class _PaymentPageState extends State<PaymentPage> {
         title: const Text("Pembayaran"),
         backgroundColor: Colors.green,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(16),
-          ),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,16 +118,8 @@ class _PaymentPageState extends State<PaymentPage> {
               },
             ),
             RadioListTile<String>(
-              title: const Text("E-Wallet (OVO, Dana, Gopay)"),
-              value: "ewallet",
-              groupValue: selectedMethod,
-              onChanged: (value) {
-                setState(() => selectedMethod = value);
-              },
-            ),
-            RadioListTile<String>(
-              title: const Text("COD (Bayar di Tempat)"),
-              value: "cod",
+              title: const Text("Cash (Bayar di Tempat)"),
+              value: "cash",
               groupValue: selectedMethod,
               onChanged: (value) {
                 setState(() => selectedMethod = value);
@@ -132,33 +136,52 @@ class _PaymentPageState extends State<PaymentPage> {
                 setState(() => note = value);
               },
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 20),
+            // Bukti pembayaran
+            if (selectedMethod == "transfer") ...[
+              const Text("Upload Bukti Pembayaran:",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              proofFile != null
+                  ? Image.file(proofFile!, height: 150)
+                  : const Text("Belum ada bukti pembayaran"),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: _pickProof,
+                icon: const Icon(Icons.camera_alt),
+                label: const Text("Ambil Foto Bukti"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
-              onPressed:
-                  selectedMethod == null || isLoading ? null : _processPayment,
-              child: isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                      "Konfirmasi Pembayaran",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
+            ],
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: selectedMethod == null || isLoading
+                    ? null
+                    : _processPayment,
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        "Konfirmasi Pembayaran",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

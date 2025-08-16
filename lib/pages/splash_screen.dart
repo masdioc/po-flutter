@@ -48,13 +48,13 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/logo.png',
+              'assets/icon/logo_po.png',
               width: 100,
               height: 100,
             ),
             const SizedBox(height: 20),
             const Text(
-              'Welcome',
+              'Welcome PO App',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
