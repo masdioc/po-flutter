@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:login_profile_app/pages/purchase_order_detail_page.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/purchase_order_provider.dart';
@@ -169,13 +170,55 @@ class _DashboardPageState extends State<DashboardPage> {
                                     Text("Tanggal: ${po.orderDate}"),
                                   ],
                                 ),
-                                trailing: Text(
-                                  currencyFormatter.format(po.total),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
+                                trailing: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: po.status.toLowerCase() == "paid"
+                                            ? Colors.green[100]
+                                            : (po.status.toLowerCase() ==
+                                                    "pending"
+                                                ? Colors.orange[100]
+                                                : Colors.red[100]),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        po.status, // ✅ langsung pakai string dari API
+                                        style: TextStyle(
+                                          color:
+                                              po.status.toLowerCase() == "paid"
+                                                  ? Colors.green[800]
+                                                  : (po.status.toLowerCase() ==
+                                                          "pending"
+                                                      ? Colors.orange[800]
+                                                      : Colors.red[800]),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      currencyFormatter.format(po.total),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          PurchaseOrderDetailPage(po: po),
+                                    ),
+                                  );
+                                },
                               ),
                             );
                           },

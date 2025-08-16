@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:login_profile_app/pages/change_password_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../providers/auth_provider.dart';
 import 'login_page.dart';
-import '../theme/app_colors.dart';
 
 // Warna tema utama
 const primaryColor = Colors.teal;
@@ -50,10 +48,6 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text("Akun Saya"),
-      //   backgroundColor: AppColors.primary,
-      // ),
       body: Center(
         child: (user == null)
             ? const Text(
@@ -64,7 +58,8 @@ class _AccountPageState extends State<AccountPage> {
                 padding: const EdgeInsets.all(16.0),
                 child: Card(
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 4,
                   child: Padding(
                     padding: const EdgeInsets.all(40.0),
@@ -81,21 +76,54 @@ class _AccountPageState extends State<AccountPage> {
                         Text(
                           "${user!['name'] ?? '-'}",
                           style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           "Email: ${user!['email'] ?? '-'}",
-                          style:
-                              const TextStyle(fontSize: 16, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(height: 20),
+
+                        // 🔹 Tombol Ganti Password
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            // backgroundColor: Colors.red,
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ChangePasswordPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.lock_reset),
+                          label: const Text("Ganti Password"),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // 🔹 Tombol Logout
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                           onPressed: _logout,
                           icon: const Icon(Icons.logout),

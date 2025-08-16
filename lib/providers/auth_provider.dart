@@ -69,4 +69,34 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> changePassword(String oldPassword, String newPassword) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/change-password"),
+        headers: {
+          "Authorization": "Bearer $token",
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode({
+          "old_password": oldPassword,
+          "new_password": newPassword,
+          "new_password_confirmation": newPassword,
+        }),
+      );
+
+      print("Status: ${response.statusCode}");
+      print("Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print("Error changePassword: $e");
+      return false;
+    }
+  }
 }
