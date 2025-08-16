@@ -22,7 +22,6 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    // Fetch PO setelah frame pertama
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PurchaseOrderProvider>(context, listen: false)
           .fetchOrders(context);
@@ -31,60 +30,59 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<PurchaseOrderProvider>(
-      builder: (context, provider, _) {
-        final totalPO = provider.orders.length;
-        final pendingPO = provider.orders
-            .where((po) => po.status.toLowerCase() == 'pending')
-            .length;
-        final totalSuppliers =
-            provider.orders.map((po) => po.supplierId).toSet().length;
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 3,
+        backgroundColor: AppColors.primary,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+        ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              "assets/logo-bgn.png",
+              height: 52,
+              width: 52,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              "Dapur BGN Ciawigebang",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            tooltip: "Refresh PO",
+            onPressed: () async {
+              final provider =
+                  Provider.of<PurchaseOrderProvider>(context, listen: false);
+              await provider.fetchOrders(context);
+              setState(() {});
+            },
+          ),
+        ],
+      ),
+      body: Consumer<PurchaseOrderProvider>(
+        builder: (context, provider, _) {
+          final totalPO = provider.orders.length;
+          final pendingPO = provider.orders
+              .where((po) => po.status.toLowerCase() == 'pending')
+              .length;
+          final recentPO = provider.orders.reversed.take(5).toList();
 
-        final recentPO = provider.orders.reversed.take(5).toList();
-
-        return Scaffold(
-          body: Padding(
+          return Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nama Dapur
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      // Logo di kiri
-                      Image.asset(
-                        "assets/logo-bgn.png",
-                        height: 52,
-                        width: 52,
-                      ),
-                      const SizedBox(width: 12),
-
-                      // Teks di tengah
-                      Expanded(
-                        child: Text(
-                          "Dapur BGN Ciawigebang",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Nama Supplier
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -100,8 +98,6 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-
                 // Summary Cards
                 Row(
                   children: [
@@ -126,14 +122,13 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // Recent PO Title
+                // Recent PO
                 const Text(
                   "Recent PO",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
 
-                // List recent PO
                 Expanded(
                   child: recentPO.isEmpty
                       ? const Center(
@@ -164,12 +159,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold),
                                 ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Tanggal: ${po.orderDate}"),
-                                  ],
-                                ),
+                                subtitle: Text("Tanggal: ${po.orderDate}"),
                                 trailing: Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -187,7 +177,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
-                                        po.status, // ✅ langsung pakai string dari API
+                                        po.status,
                                         style: TextStyle(
                                           color:
                                               po.status.toLowerCase() == "paid"
@@ -210,14 +200,22 @@ class _DashboardPageState extends State<DashboardPage> {
                                     ),
                                   ],
                                 ),
-                                onTap: () {
-                                  Navigator.push(
+                                onTap: () async {
+                                  final updatedPO = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
                                           PurchaseOrderDetailPage(po: po),
                                     ),
                                   );
+                                  if (updatedPO != null) {
+                                    final index = provider.orders.indexWhere(
+                                        (o) => o.id == updatedPO.id);
+                                    if (index != -1) {
+                                      provider.orders[index] = updatedPO;
+                                      setState(() {});
+                                    }
+                                  }
                                 },
                               ),
                             );
@@ -226,9 +224,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ],
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

@@ -95,6 +95,16 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            tooltip: "Refresh",
+            onPressed: () async {
+              final provider =
+                  Provider.of<PurchaseOrderProvider>(context, listen: false);
+              await provider.fetchOrders(context);
+              setState(() {}); // pastikan UI diperbarui
+            },
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.filter_list_rounded, color: Colors.white),
             color: Colors.white,
@@ -242,13 +252,26 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                           ],
                         ),
                         trailing: _buildStatusBadge(po.status),
-                        onTap: () {
-                          Navigator.push(
+                        onTap: () async {
+                          final updatedPO = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => PurchaseOrderDetailPage(po: po),
                             ),
                           );
+
+                          if (updatedPO != null) {
+                            // update item PO di provider agar UI list refresh
+                            final provider = Provider.of<PurchaseOrderProvider>(
+                                context,
+                                listen: false);
+                            final index = provider.orders
+                                .indexWhere((o) => o.id == updatedPO.id);
+                            if (index != -1) {
+                              provider.orders[index] = updatedPO;
+                              setState(() {}); // refresh list UI
+                            }
+                          }
                         },
                       ),
                     );

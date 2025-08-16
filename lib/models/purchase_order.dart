@@ -87,7 +87,7 @@ class PurchaseOrder {
   final String supplierId;
   final String orderNumber;
   final String orderDate;
-  final String status; // tetap string
+  String status; // tetap string
   final double total;
   final Supplier? supplier;
   final List<PurchaseOrderItem> items;
