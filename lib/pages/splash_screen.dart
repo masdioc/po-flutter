@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'login_page.dart';
-import 'profile_page.dart';
+import 'main_page.dart'; // ganti sesuai halaman utama setelah login
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,15 +19,18 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuth() async {
-    // Simulasi loading 2 detik (bisa sambil cek token di SharedPreferences)
-    await Future.delayed(const Duration(seconds: 2));
-
     final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    // Cek apakah user sudah login sebelumnya
+    await auth.tryAutoLogin();
+
+    // Simulasi loading 2 detik
+    await Future.delayed(const Duration(seconds: 2));
 
     if (auth.isLoggedIn) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const ProfilePage()),
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
       );
     } else {
       Navigator.pushReplacement(
@@ -49,6 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
               width: 100,
               height: 100,
             ),
+            const SizedBox(height: 20),
             const Text(
               'Welcome',
               style: TextStyle(
@@ -56,8 +60,8 @@ class _SplashScreenState extends State<SplashScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 20),
-            // CircularProgressIndicator(),
+            const SizedBox(height: 20),
+            const CircularProgressIndicator(),
           ],
         ),
       ),

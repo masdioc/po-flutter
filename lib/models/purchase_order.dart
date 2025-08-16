@@ -1,11 +1,126 @@
+class Supplier {
+  final String id;
+  final String name;
+  final String address;
+  final String phone;
+  final String email;
+
+  Supplier({
+    required this.id,
+    required this.name,
+    required this.address,
+    required this.phone,
+    required this.email,
+  });
+
+  factory Supplier.fromJson(Map<String, dynamic> json) {
+    return Supplier(
+      id: json['id'].toString(),
+      name: json['name'] ?? '',
+      address: json['address'] ?? '',
+      phone: json['phone'] ?? '',
+      email: json['email'] ?? '',
+    );
+  }
+}
+
+class Item {
+  final String id;
+  final String purchaseOrderId;
+  final String productName;
+  final int quantity;
+  final double price;
+
+  Item({
+    required this.id,
+    required this.purchaseOrderId,
+    required this.productName,
+    required this.quantity,
+    required this.price,
+  });
+
+  factory Item.fromJson(Map<String, dynamic> json) {
+    return Item(
+      id: json['id'].toString(),
+      purchaseOrderId: json['purchase_order_id'].toString(),
+      productName: json['product_name'] ?? '',
+      quantity: int.tryParse(json['quantity'].toString()) ?? 0,
+      price: double.tryParse(json['price'].toString()) ?? 0.0,
+    );
+  }
+}
+
+class Payment {
+  final String id;
+  final String purchaseOrderId;
+  final String paymentDate;
+  final double amount;
+  final String method;
+  final String status;
+  final String note;
+
+  Payment({
+    required this.id,
+    required this.purchaseOrderId,
+    required this.paymentDate,
+    required this.amount,
+    required this.method,
+    required this.status,
+    required this.note,
+  });
+
+  factory Payment.fromJson(Map<String, dynamic> json) {
+    return Payment(
+      id: json['id'].toString(),
+      purchaseOrderId: json['purchase_order_id'].toString(),
+      paymentDate: json['payment_date'] ?? '',
+      amount: double.tryParse(json['amount'].toString()) ?? 0.0,
+      method: json['method'] ?? '',
+      status: json['status'] ?? '',
+      note: json['note'] ?? '',
+    );
+  }
+}
+
 class PurchaseOrder {
-  String id;
-  String title;
-  String description;
+  final String id;
+  final String supplierId;
+  final String orderNumber;
+  final String orderDate;
+  final String status;
+  final double total;
+  final Supplier? supplier;
+  final List<Item> items;
+  final List<Payment> payments;
 
   PurchaseOrder({
     required this.id,
-    required this.title,
-    required this.description,
+    required this.supplierId,
+    required this.orderNumber,
+    required this.orderDate,
+    required this.status,
+    required this.total,
+    this.supplier,
+    required this.items,
+    required this.payments,
   });
+
+  factory PurchaseOrder.fromJson(Map<String, dynamic> json) {
+    return PurchaseOrder(
+      id: json['id'].toString(),
+      supplierId: json['supplier_id'].toString(),
+      orderNumber: json['order_number'] ?? '',
+      orderDate: json['order_date'] ?? '',
+      status: json['status'] ?? '',
+      total: double.tryParse(json['total'].toString()) ?? 0.0,
+      supplier:
+          json['supplier'] != null ? Supplier.fromJson(json['supplier']) : null,
+      items: json['items'] != null
+          ? List<Item>.from(json['items'].map((x) => Item.fromJson(x)))
+          : [],
+      payments: json['payments'] != null
+          ? List<Payment>.from(json['payments'].map((x) => Payment.fromJson(x)))
+          : [],
+    );
+  }
 }

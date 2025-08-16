@@ -40,7 +40,7 @@ class AccountPage extends StatelessWidget {
                             size: 80, color: primaryColor),
                         const SizedBox(height: 10),
                         Text(
-                          "Username: ${auth.user!.username}",
+                          "Name: ${auth.user!.name}",
                           style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold),
                         ),

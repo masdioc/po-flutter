@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:login_profile_app/providers/purchase_order_provider.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'pages/splash_screen.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => PurchaseOrderProvider()),
+      ],
       child: const MyApp(),
     ),
   );
