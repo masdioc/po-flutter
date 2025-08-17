@@ -52,11 +52,15 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
   void _applyChangesToItems() {
     for (int i = 0; i < widget.po.items.length; i++) {
       final item = widget.po.items[i];
-      final buyVal = double.tryParse(buyControllers[i].text) ?? 0;
-      final sellVal = double.tryParse(sellControllers[i].text) ?? 0;
-      item.priceBuy = buyVal;
-      item.priceSell = sellVal;
+      item.priceBuy = double.tryParse(buyControllers[i].text) ?? 0;
+      item.priceSell = double.tryParse(sellControllers[i].text) ?? 0;
     }
+    // Update total harga jual lokal
+    final totalSell = widget.po.items
+        .fold<double>(0, (sum, item) => sum + (item.qty * item.priceSell));
+    setState(() {
+      widget.po.total = totalSell;
+    });
   }
 
   @override
@@ -119,14 +123,25 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    //   children: [
-                    //     Text("Supplier:",
-                    //         style: TextStyle(fontWeight: FontWeight.w600)),
-                    //     Text(widget.po.supplierName),
-                    //   ],
-                    // ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Total Harga Jual:",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          currencyFormatter.format(
+                            widget.po.items.fold<double>(
+                              0,
+                              (sum, item) => sum + (item.qty * item.priceSell),
+                            ),
+                          ),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -140,6 +155,9 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                 itemCount: widget.po.items.length,
                 itemBuilder: (context, index) {
                   final item = widget.po.items[index];
+
+                  // Hitung subtotal per item
+                  final subtotal = item.qty * item.priceSell;
 
                   return Card(
                     elevation: 2,
@@ -183,6 +201,10 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                                       isDense: true,
                                     ),
                                     keyboardType: TextInputType.number,
+                                    onChanged: (_) {
+                                      setState(
+                                          () {}); // update subtotal secara realtime
+                                    },
                                   ),
                                 ),
                               ],
@@ -198,7 +220,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: Text(
-                              "Subtotal: ${currencyFormatter.format(item.qty * item.priceSell)}",
+                              "Subtotal: ${currencyFormatter.format(subtotal)}",
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blue),
@@ -211,6 +233,38 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                 },
               ),
             ),
+
+// Total Harga Jual di bawah list
+            // Container(
+            //   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            //   margin: const EdgeInsets.symmetric(vertical: 8),
+            //   decoration: BoxDecoration(
+            //     color: Colors.grey[100],
+            //     borderRadius: BorderRadius.circular(12),
+            //   ),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //     children: [
+            //       const Text(
+            //         "Total Harga Jual:",
+            //         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            //       ),
+            //       Text(
+            //         currencyFormatter.format(
+            //           widget.po.items.fold<double>(
+            //             0,
+            //             (sum, item) => sum + (item.qty * item.priceSell),
+            //           ),
+            //         ),
+            //         style: const TextStyle(
+            //             fontWeight: FontWeight.bold,
+            //             fontSize: 16,
+            //             color: Colors.blue),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+
             if (userRole == "mitra")
               SizedBox(
                 width: double.infinity,

@@ -91,7 +91,7 @@ class PurchaseOrder {
   final String orderNumber;
   final String orderDate;
   String status; // tetap string
-  final double total;
+  double total;
   final Supplier? supplier;
   final List<PurchaseOrderItem> items;
   final List<Payment> payments;
