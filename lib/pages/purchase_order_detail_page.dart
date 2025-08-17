@@ -58,9 +58,9 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                     child: ListTile(
                       title: Text(item.name),
                       subtitle: Text(
-                          "${item.qty} x ${currencyFormatter.format(item.price)}"),
+                          "${item.qty} x ${currencyFormatter.format(item.priceBuy)}"),
                       trailing: Text(
-                        currencyFormatter.format(item.qty * item.price),
+                        currencyFormatter.format(item.qty * item.priceBuy),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),

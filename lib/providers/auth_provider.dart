@@ -5,8 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 
 class AuthProvider with ChangeNotifier {
-  final String baseUrl = 'https://stagingappku.my.id/po-api/api';
-
+  // final String baseUrl = 'https://stagingappku.my.id/po-api/api';
+  final String baseUrl = 'http://192.168.0.108/po-api/api';
   User? _user;
   String? _token;
 

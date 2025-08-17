@@ -1,26 +1,7 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:po_app/providers/purchase_order_provider.dart';
-import 'package:provider/provider.dart';
-import 'providers/auth_provider.dart';
 import 'pages/splash_screen.dart';
-import 'services/check_connection.dart'; // bikin file baru
-
-void main() async {
-  // WidgetsFlutterBinding.ensureInitialized();
-  // await dotenv.load(fileName: ".env"); // Load file .env
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => PurchaseOrderProvider()),
-        ChangeNotifierProvider(
-            create: (_) => ConnectionService()), // ✅ Tambah koneksi global
-      ],
-      child: const MyApp(),
-    ),
-  );
-}
+import 'services/check_connection.dart';
+import 'package:provider/provider.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -49,7 +30,7 @@ class MyApp extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
-                        fontStyle: FontStyle.italic, // kalau mau miring
+                        fontStyle: FontStyle.italic,
                       ),
                       textAlign: TextAlign.center,
                     ),

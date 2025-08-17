@@ -43,10 +43,14 @@ class _LoginPageState extends State<LoginPage> {
           errorMsg = "Login gagal. Pastikan username dan password Anda benar.";
         });
       }
-    } on Exception {
+    } catch (e, stackTrace) {
+      // Menangkap error detail
       setState(() {
-        errorMsg = "Terjadi kesalahan saat login. Silakan coba lagi.";
+        errorMsg = "Terjadi kesalahan saat login:\n$e";
       });
+      // Opsional: log ke console untuk debugging
+      debugPrint('Login error: $e');
+      debugPrintStack(stackTrace: stackTrace);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

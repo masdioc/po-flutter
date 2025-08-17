@@ -4,14 +4,17 @@ import 'dart:convert';
 import 'auth_provider.dart';
 import '../models/purchase_order.dart';
 import 'package:provider/provider.dart';
-// import 'package:po_app/pages/main_page.dart';
 
 class PurchaseOrderProvider with ChangeNotifier {
-  final String baseUrl = 'https://stagingappku.my.id/po-api/api';
+  final String baseUrl = 'http://192.168.0.108/po-api/api';
+
   final List<PurchaseOrder> _orders = [];
+  List<Map<String, dynamic>> _products = []; // <- list produk dari API
 
   List<PurchaseOrder> get orders => _orders;
+  List<Map<String, dynamic>> get products => _products;
 
+  /// Fetch list PO
   Future<void> fetchOrders(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.token;
@@ -34,6 +37,29 @@ class PurchaseOrderProvider with ChangeNotifier {
     }
   }
 
+  /// Fetch list produk dari API /products
+  /// Fetch list produk dari API /products
+  Future<List<Map<String, dynamic>>> fetchProducts() async {
+    final url = Uri.parse('$baseUrl/products');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        // Response langsung berupa array JSON
+        final List<dynamic> data = json.decode(response.body);
+        _products = List<Map<String, dynamic>>.from(data);
+        notifyListeners();
+        return _products;
+      } else {
+        throw Exception('Gagal fetch products: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetchProducts: $e');
+      throw e;
+    }
+  }
+
+  /// Tambah PO
   Future<void> addOrder(
       BuildContext context, Map<String, dynamic> payload) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -55,13 +81,13 @@ class PurchaseOrderProvider with ChangeNotifier {
       final data = json.decode(response.body);
       _orders.add(PurchaseOrder.fromJson(data));
       notifyListeners();
-      // Refresh list
-      await fetchOrders(context);
+      await fetchOrders(context); // refresh list PO
     } else {
       throw Exception('Gagal menambah PO: ${response.body}');
     }
   }
 
+  /// Update PO
   Future<void> updateOrder(
       BuildContext context, String id, Map<String, dynamic> payload) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);

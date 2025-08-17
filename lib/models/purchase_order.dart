@@ -29,14 +29,16 @@ class Item {
   final String purchaseOrderId;
   final String productName;
   final int quantity;
-  final double price;
+  final double priceBuy;
+  final double priceSell;
 
   Item({
     required this.id,
     required this.purchaseOrderId,
     required this.productName,
     required this.quantity,
-    required this.price,
+    required this.priceBuy,
+    required this.priceSell,
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
@@ -45,7 +47,8 @@ class Item {
       purchaseOrderId: json['purchase_order_id'].toString(),
       productName: json['product_name'] ?? '',
       quantity: int.tryParse(json['quantity'].toString()) ?? 0,
-      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      priceBuy: double.tryParse(json['price_buy'].toString()) ?? 0.0,
+      priceSell: double.tryParse(json['price_sell'].toString()) ?? 0.0,
     );
   }
 }
@@ -134,19 +137,22 @@ class PurchaseOrder {
 class PurchaseOrderItem {
   final String name;
   final int qty;
-  final double price;
+  final double priceBuy;
+  final double priceSell;
 
   PurchaseOrderItem({
     required this.name,
     required this.qty,
-    required this.price,
+    required this.priceBuy,
+    required this.priceSell,
   });
 
   factory PurchaseOrderItem.fromJson(Map<String, dynamic> json) {
     return PurchaseOrderItem(
       name: json['product_name'] ?? '',
       qty: int.tryParse(json['quantity'].toString()) ?? 0,
-      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      priceBuy: double.tryParse(json['price_but'].toString()) ?? 0.0,
+      priceSell: double.tryParse(json['price_sell'].toString()) ?? 0.0,
     );
   }
 }
