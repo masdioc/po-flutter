@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:po_app/pages/purchase_order_detail_page.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/purchase_order_provider.dart';
 import '../theme/app_colors.dart';
 import '../pages/add_purchase_order_page.dart' as add_po;
@@ -18,14 +19,22 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
   final currencyFormatter =
       NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
   final dateFormatter = DateFormat("dd MMM yyyy");
-
+  String? userRole; // role user dari SharedPreferences
   String filterType = "Semua"; // Semua, Bulan, Tahun
   String? selectedMonth;
   String? selectedYear;
 
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('userRole') ?? ""; // default kosong
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadUserRole();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PurchaseOrderProvider>(context, listen: false)
           .fetchOrders(context);
@@ -282,20 +291,22 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const add_po.AddPurchaseOrderPage()),
-          );
-          final provider =
-              Provider.of<PurchaseOrderProvider>(context, listen: false);
-          await provider.fetchOrders(context);
-        },
-        backgroundColor: Colors.blueAccent,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: (userRole == "mitra" || userRole == "dapur")
+          ? FloatingActionButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const add_po.AddPurchaseOrderPage()),
+                );
+                final provider =
+                    Provider.of<PurchaseOrderProvider>(context, listen: false);
+                await provider.fetchOrders(context);
+              },
+              backgroundColor: Colors.blueAccent,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

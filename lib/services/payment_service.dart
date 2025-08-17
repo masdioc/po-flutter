@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:po_app/config/app_config.dart';
 // import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class PaymentService {
   // static const String baseUrl = "https://stagingappku.my.id/po-api/api";
-  static const String baseUrl = 'http://192.168.0.108/po-api/api';
+  // static const String baseUrl = 'http://192.168.0.108/po-api/api';
+  static const String baseUrl = AppConfig.apiUrl;
 
   /// Proses pembayaran dengan optional bukti file
   static Future<Map<String, dynamic>> payOrder({

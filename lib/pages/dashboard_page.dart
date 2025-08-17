@@ -76,7 +76,7 @@ class _DashboardPageState extends State<DashboardPage> {
           final pendingPO = provider.orders
               .where((po) => po.status.toLowerCase() == 'pending')
               .length;
-          final recentPO = provider.orders.reversed.take(5).toList();
+          final recentPO = provider.orders.reversed.take(10).toList();
 
           return Padding(
             padding: const EdgeInsets.all(16),

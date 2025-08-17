@@ -47,8 +47,8 @@ class Item {
       purchaseOrderId: json['purchase_order_id'].toString(),
       productName: json['product_name'] ?? '',
       quantity: int.tryParse(json['quantity'].toString()) ?? 0,
-      priceBuy: double.tryParse(json['price_buy'].toString()) ?? 0.0,
-      priceSell: double.tryParse(json['price_sell'].toString()) ?? 0.0,
+      priceBuy: double.tryParse(json['price_buy'].toString()) ?? 0,
+      priceSell: double.tryParse(json['price_sell'].toString()) ?? 0,
     );
   }
 }
@@ -120,7 +120,7 @@ class PurchaseOrder {
       orderNumber: json['order_number'] ?? '',
       orderDate: json['order_date'] ?? '',
       status: json['status']?.toString() ?? '',
-      total: double.tryParse(json['total'].toString()) ?? 0.0,
+      total: double.tryParse(json['total_sell'].toString()) ?? 0.0,
       supplier:
           json['supplier'] != null ? Supplier.fromJson(json['supplier']) : null,
       items: json['items'] != null
@@ -135,12 +135,14 @@ class PurchaseOrder {
 }
 
 class PurchaseOrderItem {
+  final String id;
   final String name;
   final int qty;
-  final double priceBuy;
-  final double priceSell;
+  double priceBuy;
+  double priceSell;
 
   PurchaseOrderItem({
+    required this.id,
     required this.name,
     required this.qty,
     required this.priceBuy,
@@ -149,10 +151,25 @@ class PurchaseOrderItem {
 
   factory PurchaseOrderItem.fromJson(Map<String, dynamic> json) {
     return PurchaseOrderItem(
+      id: json['id'].toString(),
       name: json['product_name'] ?? '',
-      qty: int.tryParse(json['quantity'].toString()) ?? 0,
-      priceBuy: double.tryParse(json['price_but'].toString()) ?? 0.0,
-      priceSell: double.tryParse(json['price_sell'].toString()) ?? 0.0,
+      qty: int.tryParse(json['quantity']?.toString() ?? '') ?? 0,
+      priceBuy: (json['price_buy'] is num)
+          ? (json['price_buy'] as num).toDouble()
+          : double.tryParse(json['price_buy']?.toString() ?? '0') ?? 0,
+      priceSell: (json['price_sell'] is num)
+          ? (json['price_sell'] as num).toDouble()
+          : double.tryParse(json['price_sell']?.toString() ?? '0') ?? 0,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "product_name": name,
+      "quantity": qty,
+      "price_buy": priceBuy,
+      "price_sell": priceSell,
+    };
   }
 }

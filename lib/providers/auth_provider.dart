@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
+import "../config/app_config.dart";
 
 class AuthProvider with ChangeNotifier {
   // final String baseUrl = 'https://stagingappku.my.id/po-api/api';
-  final String baseUrl = 'http://192.168.0.108/po-api/api';
+  // final String baseUrl = 'http://192.168.0.108/po-api/api';
+  final String baseUrl = AppConfig.apiUrl;
   User? _user;
   String? _token;
 
@@ -40,6 +42,10 @@ class AuthProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', _token!);
       await prefs.setString('user', json.encode(data['user']));
+      // ✅ simpan role user ke SharedPreferences
+      if (data['user']['role'] != null) {
+        await prefs.setString('userRole', data['user']['role'].toString());
+      }
     } else {
       throw Exception('Login gagal: ${response.body}');
     }
@@ -63,9 +69,16 @@ class AuthProvider with ChangeNotifier {
 
     final storedToken = prefs.getString('token');
     final storedUser = prefs.getString('user');
+    final storedRole = prefs.getString('userRole'); // ✅ ambil role
     if (storedToken != null && storedUser != null) {
       _token = storedToken;
       _user = User.fromJson(json.decode(storedUser));
+
+      if (storedRole != null) {
+        // bisa tambahkan ke user object atau pakai variabel terpisah
+        print("Role tersimpan: $storedRole");
+      }
+
       notifyListeners();
     }
   }

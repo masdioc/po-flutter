@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:po_app/config/app_config.dart';
 import 'dart:convert';
 import 'auth_provider.dart';
 import '../models/purchase_order.dart';
 import 'package:provider/provider.dart';
 
 class PurchaseOrderProvider with ChangeNotifier {
-  final String baseUrl = 'http://192.168.0.108/po-api/api';
-
+  // final String baseUrl = 'http://192.168.0.108/po-api/api';
+  final String baseUrl = AppConfig.apiUrl;
   final List<PurchaseOrder> _orders = [];
   List<Map<String, dynamic>> _products = []; // <- list produk dari API
 
@@ -113,6 +114,71 @@ class PurchaseOrderProvider with ChangeNotifier {
       }
     } else {
       throw Exception('Gagal update PO: ${response.body}');
+    }
+  }
+
+  Future<void> updatePOOrder(
+      BuildContext context, String id, Map<String, dynamic> payload) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.token;
+    if (token == null) throw Exception('Token tidak ditemukan');
+
+    final url = Uri.parse('$baseUrl/poupdate/$id');
+    final response = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final index = _orders.indexWhere((po) => po.id == id);
+      if (index != -1) {
+        _orders[index] = PurchaseOrder.fromJson(data);
+        notifyListeners();
+      }
+    } else {
+      throw Exception('Gagal update PO: ${response.body}');
+    }
+  }
+
+  /// Update item PO
+  Future<bool> updateItem(BuildContext context, PurchaseOrderItem item) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.token;
+    if (token == null) throw Exception("Token tidak ditemukan");
+
+    try {
+      final response = await http.put(
+        Uri.parse("$baseUrl/purchase-order-items/${item.id}"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: json.encode(item.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        // Update state lokal di orders
+        for (var order in _orders) {
+          final index = order.items.indexWhere((e) => e.id == item.id);
+          if (index != -1) {
+            order.items[index] = item;
+            break;
+          }
+        }
+        notifyListeners();
+        return true;
+      } else {
+        debugPrint("Update gagal: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      debugPrint("Error updateItem: $e");
+      return false;
     }
   }
 }

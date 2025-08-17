@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:po_app/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../providers/purchase_order_provider.dart';
 import 'package:intl/intl.dart';
@@ -14,20 +15,29 @@ class AddPurchaseOrderPage extends StatefulWidget {
 
 class _AddPurchaseOrderPageState extends State<AddPurchaseOrderPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _supplierIdController = TextEditingController();
+  // final TextEditingController _supplierIdController = TextEditingController();
   final TextEditingController _orderDateController = TextEditingController();
   final List<Map<String, TextEditingController>> _itemsControllers = [];
   Map<String, dynamic>? user;
   bool _isLoading = false;
+  String? userRole; // role user dari SharedPreferences
   // final prrovider = Provider.of<PurchaseOrderProvider>(context); // listen: true
   List<String> productOptions = []; // sebelumnya final
   @override
   void initState() {
     super.initState();
     _loadUserFromPrefs();
+    _loadUserRole();
     _addItem(); // Tambah item default
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchProducts();
+    });
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('userRole') ?? ""; // default kosong
     });
   }
 
@@ -189,18 +199,45 @@ class _AddPurchaseOrderPageState extends State<AddPurchaseOrderPage> {
             // Row Quantity + Hapus
             Row(
               children: [
+                // Tombol Kurang
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline,
+                      color: Colors.blue),
+                  onPressed: () {
+                    int current = int.tryParse(item["quantity"]!.text) ?? 0;
+                    if (current > 0) {
+                      setState(() {
+                        item["quantity"]!.text = (current - 1).toString();
+                      });
+                    }
+                  },
+                ),
+                // Field Quantity
                 Expanded(
                   child: TextFormField(
                     controller: item["quantity"],
+                    textAlign: TextAlign.center,
                     decoration: const InputDecoration(
                       labelText: "Jumlah",
-                      prefixIcon: Icon(Icons.confirmation_num_outlined),
+                      border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) =>
                         value!.isEmpty ? "Jumlah wajib diisi" : null,
                   ),
                 ),
+                // Tombol Tambah
+                IconButton(
+                  icon:
+                      const Icon(Icons.add_circle_outline, color: Colors.blue),
+                  onPressed: () {
+                    int current = int.tryParse(item["quantity"]!.text) ?? 0;
+                    setState(() {
+                      item["quantity"]!.text = (current + 1).toString();
+                    });
+                  },
+                ),
+                // Tombol Hapus
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () => _removeItem(index),
@@ -208,36 +245,38 @@ class _AddPurchaseOrderPageState extends State<AddPurchaseOrderPage> {
               ],
             ),
             const SizedBox(height: 12),
-            // Row Harga Beli + Harga Jual
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: item["price_buy"],
-                    decoration: const InputDecoration(
-                      labelText: "Harga Beli",
-                      prefixIcon: Icon(Icons.attach_money),
+            // Row Harga Beli + Harga Jual (hanya untuk mitra)
+            if (userRole == "mitra") ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: item["price_buy"],
+                      decoration: const InputDecoration(
+                        labelText: "Harga Beli",
+                        prefixIcon: Icon(Icons.attach_money),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) =>
+                          value!.isEmpty ? "Harga Beli wajib diisi" : null,
                     ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) =>
-                        value!.isEmpty ? "Harga Beli wajib diisi" : null,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: item["price_sell"],
-                    decoration: const InputDecoration(
-                      labelText: "Harga Jual",
-                      prefixIcon: Icon(Icons.attach_money),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: item["price_sell"],
+                      decoration: const InputDecoration(
+                        labelText: "Harga Jual",
+                        prefixIcon: Icon(Icons.attach_money),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) =>
+                          value!.isEmpty ? "Harga Jual wajib diisi" : null,
                     ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) =>
-                        value!.isEmpty ? "Harga Jual wajib diisi" : null,
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -248,6 +287,7 @@ class _AddPurchaseOrderPageState extends State<AddPurchaseOrderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppColors.primary,
         title: const Text("Tambah PO"),
         centerTitle: true,
         elevation: 2,
