@@ -6,8 +6,6 @@ import '../models/user.dart';
 import "../config/app_config.dart";
 
 class AuthProvider with ChangeNotifier {
-  // final String baseUrl = 'https://stagingappku.my.id/po-api/api';
-  // final String baseUrl = 'http://192.168.0.108/po-api/api';
   final String baseUrl = AppConfig.apiUrl;
   User? _user;
   String? _token;
@@ -46,6 +44,14 @@ class AuthProvider with ChangeNotifier {
       if (data['user']['role'] != null) {
         await prefs.setString('userRole', data['user']['role'].toString());
       }
+      if (data['user']['suplier_norek'] != null) {
+        await prefs.setString(
+            'suplier_norek', data['user']['suplier_norek'].toString());
+        await prefs.setString(
+            'suplier_bank', data['user']['suplier_bank'].toString());
+        await prefs.setString(
+            'suplier_an_bank', data['user']['suplier_an_bank'].toString());
+      }
     } else {
       throw Exception('Login gagal: ${response.body}');
     }
@@ -70,6 +76,7 @@ class AuthProvider with ChangeNotifier {
     final storedToken = prefs.getString('token');
     final storedUser = prefs.getString('user');
     final storedRole = prefs.getString('userRole'); // ✅ ambil role
+
     if (storedToken != null && storedUser != null) {
       _token = storedToken;
       _user = User.fromJson(json.decode(storedUser));

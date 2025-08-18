@@ -18,6 +18,9 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   String? selectedMethod;
+  String bankName = "";
+  String bankAccount = "";
+  String accountName = "";
   String note = "";
   bool isLoading = false;
   File? proofFile;
@@ -32,6 +35,7 @@ class _PaymentPageState extends State<PaymentPage> {
   @override
   void initState() {
     super.initState();
+    _loadBankInfo();
     // Set default total bayar dari PO
     _amountController.text = _currencyFormat.format(widget.po.total);
 
@@ -50,15 +54,25 @@ class _PaymentPageState extends State<PaymentPage> {
     });
   }
 
-  Future<void> _pickProof(ImageSource source) async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: source, imageQuality: 80);
-    if (pickedFile != null) {
-      setState(() {
-        proofFile = File(pickedFile.path);
-      });
-    }
+  Future<void> _loadBankInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      bankName = prefs.getString("suplier_bank") ?? "";
+      bankAccount = prefs.getString("suplier_norek") ?? "";
+      accountName = prefs.getString("suplier_an_bank") ?? "";
+    });
   }
+
+  // Future<void> _pickProof(ImageSource source) async {
+  //   final XFile? pickedFile =
+  //       await _picker.pickImage(source: source, imageQuality: 80);
+  //   if (pickedFile != null) {
+  //     setState(() {
+  //       proofFile = File(pickedFile.path);
+  //     });
+  //   }
+  // }
 
   Future<void> _processPayment() async {
     if (selectedMethod == null) return;
@@ -193,46 +207,55 @@ class _PaymentPageState extends State<PaymentPage> {
             const SizedBox(height: 20),
             // Bukti pembayaran
             if (selectedMethod == "transfer") ...[
-              const Text("Upload Bukti Pembayaran:",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              proofFile != null
-                  ? Image.file(proofFile!, height: 150)
-                  : const Text("Belum ada bukti pembayaran"),
-              const SizedBox(height: 10),
-
-              // Tombol kamera & file sejajar
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _pickProof(ImageSource.camera),
-                      icon: const Icon(Icons.camera_alt),
-                      label: const Text("Ambil Foto"),
-                      style: ElevatedButton.styleFrom(
-                        // backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+              SizedBox(
+                width: double.infinity, // full width
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16), // padding dalam card
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Informasi Rekening:",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        Text("🏦 Bank: $bankName",
+                            style: const TextStyle(fontSize: 15)),
+                        Text("💳 No. Rekening: $bankAccount",
+                            style: const TextStyle(fontSize: 15)),
+                        Text("👤 Atas Nama: $accountName",
+                            style: const TextStyle(fontSize: 15)),
+                        const SizedBox(height: 8),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: bankAccount));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text("No. Rekening berhasil disalin")),
+                            );
+                          },
+                          icon: const Icon(Icons.copy),
+                          label: const Text("Salin No. Rekening"),
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 10), // jarak antar tombol
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _pickProof(ImageSource.gallery),
-                      icon: const Icon(Icons.upload_file),
-                      label: const Text("Dari File"),
-                      style: ElevatedButton.styleFrom(
-                        // backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
+              const SizedBox(height: 20),
             ],
 
             const SizedBox(height: 20),

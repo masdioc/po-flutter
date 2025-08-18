@@ -48,14 +48,17 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: (user == null)
-            ? const Text(
+      body: (user == null)
+          ? const Center(
+              child: Text(
                 "Tidak ada data user",
                 style: TextStyle(fontSize: 16, color: Colors.grey),
-              )
-            : Padding(
-                padding: const EdgeInsets.all(16.0),
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(16.0), // padding dari tepi layar
+              child: SizedBox.expand(
+                // supaya isi memenuhi tinggi & lebar
                 child: Card(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -64,7 +67,8 @@ class _AccountPageState extends State<AccountPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(40.0),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment:
+                          MainAxisAlignment.center, // biar tengah
                       children: [
                         Image.asset(
                           'assets/logo-bgn.png',
@@ -92,10 +96,7 @@ class _AccountPageState extends State<AccountPage> {
                         // 🔹 Tombol Ganti Password
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
+                            minimumSize: const Size(double.infinity, 48),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -117,10 +118,7 @@ class _AccountPageState extends State<AccountPage> {
                         // 🔹 Tombol Logout
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
+                            minimumSize: const Size(double.infinity, 48),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -134,7 +132,7 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
               ),
-      ),
+            ),
     );
   }
 }
