@@ -44,67 +44,71 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(
-              140), // tinggi lebih besar biar semua teks muat
-          child: AppBar(
-            elevation: 2,
-            backgroundColor: AppColors.primary,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-            ),
-            centerTitle: true,
-            flexibleSpace: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 16), // kasih jarak atas
-                  Image.asset("assets/logo-bgn.png", height: 52, width: 52),
-                  const SizedBox(height: 6),
-                  const Text(
-                    "Dapur BGN Ciawigebang",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Text(
-                    "AKSES ROLE: ${(userRole ?? 'UNKNOWN').toUpperCase()}",
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const Text(
-                    "Mitra BGN",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
+        appBar: AppBar(
+          elevation: 2,
+          backgroundColor: AppColors
+              .primary, // atau AppColors.primary kalau mau pakai warna utama
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+          ),
+          automaticallyImplyLeading: false,
+          titleSpacing: 16,
+          toolbarHeight: 90, // 👉 kontrol tinggi AppBar biar lega
+          title: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Logo kiri
+              Image.asset(
+                "assets/logo-bgn.png",
+                height: 52,
+                width: 52,
               ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh, color: Colors.white),
-                tooltip: "Refresh ",
-                onPressed: () async {
-                  final provider = Provider.of<PurchaseOrderProvider>(context,
-                      listen: false);
-                  await provider.fetchOrders(context);
-                  setState(() {});
-                },
+
+              const SizedBox(width: 12),
+
+              // Teks kanan logo
+              Expanded(
+                child: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center, // 👉 benar2 center vertikal
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Dapur BGN Ciawigebang",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis, // biar ga kepanjangan
+                    ),
+                    Text(
+                      "AKSES ROLE: ${(userRole ?? 'UNKNOWN').toUpperCase()}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Text(
+                      "Mitra BGN",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
         body: Consumer<PurchaseOrderProvider>(
           builder: (context, provider, _) {
-            final totalPO = provider.orders.length;
+            // final totalPO = provider.orders.length;
             final pendingPO = provider.orders
                 .where((po) => po.status.toLowerCase() == 'pending')
                 .length;
@@ -209,11 +213,26 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  const Text(
-                    "Recent PO",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Recent PO",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon:
+                            const Icon(Icons.refresh, color: AppColors.primary),
+                        onPressed: () {
+                          Provider.of<PurchaseOrderProvider>(context,
+                                  listen: false)
+                              .fetchOrders(context);
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 6),
 
                   Expanded(
                     child: recentPO.isEmpty
@@ -254,37 +273,74 @@ class _DashboardPageState extends State<DashboardPage> {
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 6),
                                         decoration: BoxDecoration(
-                                          color:
-                                              po.status.toLowerCase() == "paid"
-                                                  ? Colors.green[100]
-                                                  : (po.status.toLowerCase() ==
-                                                          "pending"
-                                                      ? Colors.orange[100]
-                                                      : Colors.red[100]),
+                                          color: po.status.toLowerCase() ==
+                                                  "paid"
+                                              ? Colors.green.withOpacity(0.15)
+                                              : (po.status.toLowerCase() ==
+                                                      "pending"
+                                                  ? Colors.orange
+                                                      .withOpacity(0.15)
+                                                  : Colors.red
+                                                      .withOpacity(0.15)),
                                           borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          po.status,
-                                          style: TextStyle(
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
                                             color: po.status.toLowerCase() ==
                                                     "paid"
-                                                ? Colors.green[800]
+                                                ? Colors.green
                                                 : (po.status.toLowerCase() ==
                                                         "pending"
-                                                    ? Colors.orange[800]
-                                                    : Colors.red[800]),
-                                            fontWeight: FontWeight.bold,
+                                                    ? Colors.orange
+                                                    : Colors.red),
+                                            width: 1,
                                           ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              po.status.toLowerCase() == "paid"
+                                                  ? Icons.check_circle
+                                                  : (po.status.toLowerCase() ==
+                                                          "pending"
+                                                      ? Icons.access_time
+                                                      : Icons.cancel),
+                                              size: 16,
+                                              color: po.status.toLowerCase() ==
+                                                      "paid"
+                                                  ? Colors.green
+                                                  : (po.status.toLowerCase() ==
+                                                          "pending"
+                                                      ? Colors.orange
+                                                      : Colors.red),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              po.status.toUpperCase(),
+                                              style: TextStyle(
+                                                color: po.status
+                                                            .toLowerCase() ==
+                                                        "paid"
+                                                    ? Colors.green[800]
+                                                    : (po.status.toLowerCase() ==
+                                                            "pending"
+                                                        ? Colors.orange[800]
+                                                        : Colors.red[800]),
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 13,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
                                         currencyFormatter.format(po.total),
                                         style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
-                                        ),
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87,
+                                            fontSize: 12),
                                       ),
                                     ],
                                   ),
