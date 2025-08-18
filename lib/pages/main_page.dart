@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../pages/dashboard_page.dart';
 import '../pages/purchase_order_page.dart';
 import '../pages/profile_page.dart';
+import '../pages/product_list.dart'; // <-- untuk manajemen produk
 import '../providers/purchase_order_provider.dart';
 import '../theme/app_colors.dart';
 
@@ -15,12 +18,36 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
+  String? userRole; // simpan role user
+  List<Widget> _pages = [];
 
-  final List<Widget> _pages = [
-    const DashboardPage(),
-    const PurchaseOrderPage(),
-    const AccountPage(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('userRole') ?? 'user';
+      _setupPages();
+    });
+  }
+
+  void _setupPages() {
+    // default pages
+    _pages = [
+      const DashboardPage(),
+      const PurchaseOrderPage(),
+      const AccountPage(),
+    ];
+
+    // kalau admin, tambahkan menu product
+    if (userRole == 'admin') {
+      _pages.insert(2, const ProductListPage());
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -38,6 +65,13 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    if (userRole == null) {
+      // masih loading role
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return ChangeNotifierProvider(
       create: (_) => PurchaseOrderProvider(),
       child: Scaffold(
@@ -69,7 +103,10 @@ class _MainNavigationState extends State<MainNavigation> {
             items: [
               _buildNavItem(Icons.dashboard, "Dashboard", _selectedIndex == 0),
               _buildNavItem(Icons.list_alt, "PO", _selectedIndex == 1),
-              _buildNavItem(Icons.person, "Profile", _selectedIndex == 2),
+              if (userRole == 'admin')
+                _buildNavItem(Icons.inventory, "Produk", _selectedIndex == 2),
+              _buildNavItem(Icons.person, "Profile",
+                  _selectedIndex == (userRole == 'admin' ? 3 : 2)),
             ],
           ),
         ),

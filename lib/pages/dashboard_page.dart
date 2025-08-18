@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:po_app/pages/purchase_order_detail_page.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/purchase_order_provider.dart';
 import '../theme/app_colors.dart';
 
@@ -18,10 +19,18 @@ class _DashboardPageState extends State<DashboardPage> {
     symbol: 'Rp ',
     decimalDigits: 0,
   );
+  String? userRole;
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('userRole') ?? ""; // default kosong
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    _loadUserRole();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PurchaseOrderProvider>(context, listen: false)
           .fetchOrders(context);
@@ -85,13 +94,27 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: Text(
+                      "AKSES ROLE: ${(userRole ?? 'UNKNOWN').toUpperCase()}",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 45, 44, 44),
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.only(bottom: 12),
                   child: const Center(
                     child: Text(
-                      "Suplier CV. ALi Jaya Logistik",
+                      "Supporting Mitra BGN",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Color.fromARGB(255, 45, 44, 44),
                       ),

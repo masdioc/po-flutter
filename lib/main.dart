@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:po_app/providers/purchase_order_provider.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/product_provider.dart';
 import 'pages/splash_screen.dart';
 import 'services/check_connection.dart'; // bikin file baru
 
@@ -12,10 +13,11 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => PurchaseOrderProvider()),
         ChangeNotifierProvider(
             create: (_) => ConnectionService()), // ✅ Tambah koneksi global
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => PurchaseOrderProvider()),
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
       ],
       child: const MyApp(),
     ),
