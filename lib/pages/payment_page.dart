@@ -64,15 +64,15 @@ class _PaymentPageState extends State<PaymentPage> {
     });
   }
 
-  // Future<void> _pickProof(ImageSource source) async {
-  //   final XFile? pickedFile =
-  //       await _picker.pickImage(source: source, imageQuality: 80);
-  //   if (pickedFile != null) {
-  //     setState(() {
-  //       proofFile = File(pickedFile.path);
-  //     });
-  //   }
-  // }
+  Future<void> _pickProof(ImageSource source) async {
+    final XFile? pickedFile =
+        await _picker.pickImage(source: source, imageQuality: 80);
+    if (pickedFile != null) {
+      setState(() {
+        proofFile = File(pickedFile.path);
+      });
+    }
+  }
 
   Future<void> _processPayment() async {
     if (selectedMethod == null) return;
@@ -174,7 +174,7 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text("Pilih Metode Pembayaran:",
+            const Text("Lakukan pembayaran via Transfer Bank:",
                 style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             RadioListTile<String>(
@@ -185,15 +185,8 @@ class _PaymentPageState extends State<PaymentPage> {
                 setState(() => selectedMethod = value);
               },
             ),
-            RadioListTile<String>(
-              title: const Text("Cash (Bayar di Tempat)"),
-              value: "cash",
-              groupValue: selectedMethod,
-              onChanged: (value) {
-                setState(() => selectedMethod = value);
-              },
-            ),
-            const SizedBox(height: 20),
+
+            const SizedBox(height: 12),
             TextField(
               decoration: const InputDecoration(
                 labelText: "Catatan",
@@ -207,39 +200,49 @@ class _PaymentPageState extends State<PaymentPage> {
             const SizedBox(height: 20),
             // Bukti pembayaran
             if (selectedMethod == "transfer") ...[
-              const SizedBox(height: 10),
               SizedBox(
-                width: double.infinity, // full width
+                width: double.infinity,
                 child: Card(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 2,
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Padding(
-                    padding: const EdgeInsets.all(16), // padding dalam card
+                    padding: const EdgeInsets.all(12.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "Informasi Rekening:",
+                          "Informasi Rekening",
                           style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Text("🏦 Bank: $bankName",
                             style: const TextStyle(fontSize: 15)),
                         Text("💳 No. Rekening: $bankAccount",
                             style: const TextStyle(fontSize: 15)),
                         Text("👤 Atas Nama: $accountName",
                             style: const TextStyle(fontSize: 15)),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         ElevatedButton.icon(
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: bankAccount));
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text("No. Rekening berhasil disalin")),
+                              SnackBar(
+                                content: const Text(
+                                    "Nomor rekening berhasil disalin ✅"),
+                                backgroundColor: Colors.green[600],
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
                             );
                           },
                           icon: const Icon(Icons.copy),
@@ -248,6 +251,10 @@ class _PaymentPageState extends State<PaymentPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                           ),
                         ),
                       ],
@@ -255,7 +262,58 @@ class _PaymentPageState extends State<PaymentPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
+              const Text(
+                "Upload Bukti Pembayaran",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _pickProof(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library),
+                      label: const Text("Dari Galeri"),
+                      style: ElevatedButton.styleFrom(
+                        // backgroundColor: Colors.blue[600],
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _pickProof(ImageSource.camera),
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text("Kamera"),
+                      style: ElevatedButton.styleFrom(
+                        // backgroundColor: Colors.blueGrey,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (proofFile != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    proofFile!,
+                    width: 180,
+                    height: 180,
+                    fit: BoxFit.cover,
+                  ),
+                ),
             ],
 
             const SizedBox(height: 20),

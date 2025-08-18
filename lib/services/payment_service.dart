@@ -27,6 +27,8 @@ class PaymentService {
 
       // Header Authorization
       request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Content-Type'] = 'Application/json';
+      request.headers['Accept'] = 'Application/json';
 
       // Fields form
       request.fields['purchase_order_id'] = purchaseOrderId.toString();

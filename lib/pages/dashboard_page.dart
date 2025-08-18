@@ -151,7 +151,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       Expanded(
                         child: _buildSummaryCard(
-                          title: "Pending PO",
+                          title: "Pending",
                           value: pendingPO.toString(),
                           color: Colors.orange,
                           icon: Icons.pending_actions,
@@ -160,7 +160,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildSummaryCard(
-                          title: "Paid PO",
+                          title: "Paid",
                           value: paidPO.toString(),
                           color: Colors.blueAccent,
                           icon: Icons.list_alt,
