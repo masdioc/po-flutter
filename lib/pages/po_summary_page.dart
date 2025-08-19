@@ -112,20 +112,30 @@ class _PoSummaryPageState extends State<PoSummaryPage> {
         body: Consumer<PurchaseOrderProvider>(
           builder: (context, provider, _) {
             final totalPO = provider.orders.length;
-            final pendingPO = provider.orders
-                .where((po) => po.status.toLowerCase() == 'pending')
+            final orderPO = provider.orders
+                .where((po) => po.status.toLowerCase() == 'order')
+                .length;
+            final invoicePO = provider.orders
+                .where((po) => po.status.toLowerCase() == 'invoice')
                 .length;
             final paidPO = provider.orders
                 .where((po) => po.status.toLowerCase() == 'paid')
                 .length;
-
             // --- urutkan pending dulu + id desc ---
             final sortedOrders = [...provider.orders];
             sortedOrders.sort((a, b) {
-              if (a.status.toLowerCase() == 'pending' &&
-                  b.status.toLowerCase() != 'pending') return -1;
-              if (a.status.toLowerCase() != 'pending' &&
-                  b.status.toLowerCase() == 'pending') return 1;
+              String sa = a.status.toLowerCase();
+              String sb = b.status.toLowerCase();
+
+              // Prioritas status "order"
+              if (sa == 'order' && sb != 'order') return -1;
+              if (sa != 'order' && sb == 'order') return 1;
+
+              // Prioritas status "invoice"
+              if (sa == 'invoice' && sb != 'invoice') return -1;
+              if (sa != 'invoice' && sb == 'invoice') return 1;
+
+              // Kalau sama2 order/invoice/atau status lain, urutkan berdasarkan id desc
               return b.id.compareTo(a.id);
             });
 
@@ -154,15 +164,22 @@ class _PoSummaryPageState extends State<PoSummaryPage> {
                     children: [
                       Expanded(
                         child: _SummaryCard(
-                          title: "Totsl",
+                          title: "Total",
                           value: totalPO.toString(),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _SummaryCard(
-                          title: "Pending",
-                          value: pendingPO.toString(),
+                          title: "Order",
+                          value: orderPO.toString(),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _SummaryCard(
+                          title: "Invoice",
+                          value: invoicePO.toString(),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -178,7 +195,10 @@ class _PoSummaryPageState extends State<PoSummaryPage> {
 
                   // Chart Summary
                   ChartSummary(
-                      total: totalPO, pending: pendingPO, paid: paidPO),
+                      total: totalPO,
+                      order: orderPO,
+                      invoice: invoicePO,
+                      paid: paidPO),
 
                   const SizedBox(height: 24),
 
@@ -210,7 +230,9 @@ class _PoSummaryPageState extends State<PoSummaryPage> {
                           DropdownMenuItem(
                               value: "Semua", child: Text("Semua")),
                           DropdownMenuItem(
-                              value: "Pending", child: Text("Pending")),
+                              value: "Order", child: Text("Order")),
+                          DropdownMenuItem(
+                              value: "Invoice", child: Text("Invoice")),
                           DropdownMenuItem(value: "Paid", child: Text("Paid")),
                           DropdownMenuItem(
                               value: "Cancelled", child: Text("Cancelled")),
@@ -288,12 +310,20 @@ class _PoSummaryPageState extends State<PoSummaryPage> {
                                           color: po.status.toLowerCase() ==
                                                   "paid"
                                               ? Colors.green.withOpacity(0.15)
-                                              : (po.status.toLowerCase() ==
-                                                      "pending"
+                                              : (po
+                                                          .status
+                                                          .toLowerCase() ==
+                                                      "order"
                                                   ? Colors.orange
                                                       .withOpacity(0.15)
-                                                  : Colors.red
-                                                      .withOpacity(0.15)),
+                                                  : (po
+                                                              .status
+                                                              .toLowerCase() ==
+                                                          "invoice"
+                                                      ? Colors.blue
+                                                          .withOpacity(0.15)
+                                                      : Colors.red
+                                                          .withOpacity(0.15))),
                                           borderRadius:
                                               BorderRadius.circular(20),
                                           border: Border.all(
@@ -301,9 +331,12 @@ class _PoSummaryPageState extends State<PoSummaryPage> {
                                                     "paid"
                                                 ? Colors.green
                                                 : (po.status.toLowerCase() ==
-                                                        "pending"
+                                                        "order"
                                                     ? Colors.orange
-                                                    : Colors.red),
+                                                    : (po.status.toLowerCase() ==
+                                                            "invoice"
+                                                        ? Colors.blue
+                                                        : Colors.red)),
                                             width: 1,
                                           ),
                                         ),
@@ -314,17 +347,23 @@ class _PoSummaryPageState extends State<PoSummaryPage> {
                                               po.status.toLowerCase() == "paid"
                                                   ? Icons.check_circle
                                                   : (po.status.toLowerCase() ==
-                                                          "pending"
-                                                      ? Icons.access_time
-                                                      : Icons.cancel),
+                                                          "order"
+                                                      ? Icons.shopping_cart
+                                                      : (po.status.toLowerCase() ==
+                                                              "invoice"
+                                                          ? Icons.receipt_long
+                                                          : Icons.cancel)),
                                               size: 16,
                                               color: po.status.toLowerCase() ==
                                                       "paid"
                                                   ? Colors.green
                                                   : (po.status.toLowerCase() ==
-                                                          "pending"
+                                                          "order"
                                                       ? Colors.orange
-                                                      : Colors.red),
+                                                      : (po.status.toLowerCase() ==
+                                                              "invoice"
+                                                          ? Colors.blue
+                                                          : Colors.red)),
                                             ),
                                             const SizedBox(width: 6),
                                             Text(
@@ -335,9 +374,12 @@ class _PoSummaryPageState extends State<PoSummaryPage> {
                                                         "paid"
                                                     ? Colors.green[800]
                                                     : (po.status.toLowerCase() ==
-                                                            "pending"
+                                                            "order"
                                                         ? Colors.orange[800]
-                                                        : Colors.red[800]),
+                                                        : (po.status.toLowerCase() ==
+                                                                "invoice"
+                                                            ? Colors.blue[800]
+                                                            : Colors.red[800])),
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 13,
                                                 letterSpacing: 0.5,

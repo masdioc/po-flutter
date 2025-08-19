@@ -3,13 +3,15 @@ import 'package:fl_chart/fl_chart.dart';
 
 class ChartSummary extends StatelessWidget {
   final int total;
-  final int pending;
+  final int order;
+  final int invoice;
   final int paid;
 
   const ChartSummary({
     super.key,
     required this.total,
-    required this.pending,
+    required this.order,
+    required this.invoice,
     required this.paid,
   });
 
@@ -38,8 +40,8 @@ class ChartSummary extends StatelessWidget {
             child: BarChart(
               BarChartData(
                 barGroups: [
-                  makeGroupData(
-                      0, total.toDouble(), pending.toDouble(), paid.toDouble()),
+                  makeGroupData(0, total.toDouble(), order.toDouble(),
+                      invoice.toDouble(), paid.toDouble()),
                 ],
                 titlesData: FlTitlesData(
                   bottomTitles: AxisTitles(
@@ -67,9 +69,11 @@ class ChartSummary extends StatelessWidget {
           const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              LegendItem(color: Colors.blue, text: "Total"),
+              LegendItem(color: Colors.brown, text: "Total"),
               SizedBox(width: 16),
-              LegendItem(color: Colors.orange, text: "Pending"),
+              LegendItem(color: Colors.orange, text: "Order"),
+              SizedBox(width: 16),
+              LegendItem(color: Colors.blue, text: "Invoice"),
               SizedBox(width: 16),
               LegendItem(color: Colors.green, text: "Paid"),
             ],
@@ -80,12 +84,13 @@ class ChartSummary extends StatelessWidget {
   }
 
   BarChartGroupData makeGroupData(
-      int x, double total, double pending, double paid) {
+      int x, double total, double order, double invoice, double paid) {
     return BarChartGroupData(
       x: x,
       barRods: [
-        BarChartRodData(toY: total, color: Colors.blue, width: 12),
-        BarChartRodData(toY: pending, color: Colors.orange, width: 12),
+        BarChartRodData(toY: total, color: Colors.brown, width: 12),
+        BarChartRodData(toY: order, color: Colors.orange, width: 12),
+        BarChartRodData(toY: invoice, color: Colors.blue, width: 12),
         BarChartRodData(toY: paid, color: Colors.green, width: 12),
       ],
       barsSpace: 4,

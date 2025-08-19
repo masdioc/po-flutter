@@ -333,7 +333,7 @@ class _AddPurchaseOrderPageState extends State<AddPurchaseOrderPage> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _savePO,
+                  onPressed: _isLoading ? null : _confirmSavePO,
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
@@ -352,5 +352,51 @@ class _AddPurchaseOrderPageState extends State<AddPurchaseOrderPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmSavePO() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final orderDate = _orderDateController.text;
+    final totalItems = _itemsControllers.length;
+    final totalQty = _itemsControllers.fold<int>(
+      0,
+      (sum, item) => sum + (int.tryParse(item["quantity"]!.text) ?? 0),
+    );
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Konfirmasi Simpan"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Tanggal Order: $orderDate"),
+            Text("Total Item: $totalItems"),
+            Text("Total Qty: $totalQty"),
+            const SizedBox(height: 12),
+            const Text("Apakah Anda yakin ingin menyimpan PO ini?"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+            ),
+            child: const Text("Ya, Simpan"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      _savePO();
+    }
   }
 }

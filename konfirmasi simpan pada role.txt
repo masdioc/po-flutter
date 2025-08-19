@@ -1,0 +1,10 @@
+konfirmasi simpan pada role :
+- dapur : yakin item tidak ada yang kurang,jika masih ada silahkan tambah item
+- mitra : 
+	 - yakin semua item harga beli dan harga jual sudah benar semua?
+	 - jika sudah update harga akan dilanjutkan ke penagihan finance
+	 - bisa cetak invoice / tagihan
+- finance : tidak bisa konfirmasi pembayaran karena mitra belum update harga
+	- bisa cetak laporan keuangan, rp total po,rp total pending,rp total dibayar
+- admin : bisa membatalkan po yg masih status order
+

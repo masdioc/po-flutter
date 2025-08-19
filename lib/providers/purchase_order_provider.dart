@@ -38,8 +38,6 @@ class PurchaseOrderProvider with ChangeNotifier {
     }
   }
 
-  /// Fetch list produk dari API /products
-  /// Fetch list produk dari API /products
   Future<List<Map<String, dynamic>>> fetchProducts() async {
     final url = Uri.parse('$baseUrl/products');
 
@@ -179,6 +177,32 @@ class PurchaseOrderProvider with ChangeNotifier {
     } catch (e) {
       debugPrint("Error updateItem: $e");
       return false;
+    }
+  }
+
+  void updateLocalPO(int id, Map<String, dynamic> payload) {
+    final index = _orders.indexWhere((po) => po.id == id);
+    if (index != -1) {
+      final po = _orders[index];
+
+      // update status
+      if (payload.containsKey('status')) {
+        po.status = payload['status'];
+      }
+
+      // update items
+      if (payload.containsKey('items')) {
+        po.items = (payload['items'] as List)
+            .map((e) => PurchaseOrderItem.fromJson(e))
+            .toList();
+      }
+
+      // update total
+      po.total = po.items
+          .fold<double>(0, (sum, item) => sum + (item.qty * item.priceSell));
+
+      _orders[index] = po;
+      notifyListeners();
     }
   }
 }

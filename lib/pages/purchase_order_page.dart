@@ -60,31 +60,68 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
   /// ✅ Helper: styling status label
   Widget _buildStatusBadge(String status) {
     final statusLower = status.toLowerCase();
-    Color bgColor, textColor;
 
-    if (statusLower == "paid") {
-      bgColor = Colors.green[100]!;
-      textColor = Colors.green[800]!;
-    } else if (statusLower == "pending") {
-      bgColor = Colors.orange[100]!;
-      textColor = Colors.orange[800]!;
-    } else {
-      bgColor = Colors.red[100]!;
-      textColor = Colors.red[800]!;
-    }
+    // Mapping warna & ikon sesuai status
+    final Map<String, Map<String, dynamic>> statusStyles = {
+      "paid": {
+        "bg": Colors.green[100],
+        "text": Colors.green[800],
+        "icon": Icons.check_circle,
+      },
+      "order": {
+        "bg": Colors.orange[100],
+        "text": Colors.orange[800],
+        "icon": Icons.shopping_cart,
+      },
+      "invoice": {
+        "bg": Colors.blue[100],
+        "text": Colors.blue[800],
+        "icon": Icons.receipt_long,
+      },
+      "pending": {
+        "bg": Colors.amber[100],
+        "text": Colors.amber[800],
+        "icon": Icons.access_time,
+      },
+      "cancel": {
+        "bg": Colors.red[100],
+        "text": Colors.red[800],
+        "icon": Icons.cancel,
+      },
+    };
+
+    final style = statusStyles[statusLower] ??
+        {
+          "bg": Colors.grey[200],
+          "text": Colors.grey[800],
+          "icon": Icons.help_outline,
+        };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
+        color: style["bg"],
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        status,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: textColor,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            style["icon"],
+            size: 16,
+            color: style["text"],
+          ),
+          const SizedBox(width: 6),
+          Text(
+            status.toUpperCase(), // Selalu UPPERCASE
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: style["text"],
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -268,17 +305,13 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                               builder: (_) => PurchaseOrderDetailPage(po: po),
                             ),
                           );
-
                           if (updatedPO != null) {
-                            // update item PO di provider agar UI list refresh
-                            final provider = Provider.of<PurchaseOrderProvider>(
-                                context,
-                                listen: false);
                             final index = provider.orders
-                                .indexWhere((o) => o.id == updatedPO.id);
+                                .indexWhere((e) => e.id == updatedPO.id);
                             if (index != -1) {
-                              provider.orders[index] = updatedPO;
-                              setState(() {}); // refresh list UI
+                              provider.orders[index] =
+                                  updatedPO; // update list lokal
+                              provider.notifyListeners();
                             }
                           }
                         },

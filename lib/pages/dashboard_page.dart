@@ -109,8 +109,11 @@ class _DashboardPageState extends State<DashboardPage> {
         body: Consumer<PurchaseOrderProvider>(
           builder: (context, provider, _) {
             // final totalPO = provider.orders.length;
-            final pendingPO = provider.orders
-                .where((po) => po.status.toLowerCase() == 'pending')
+            final orderPO = provider.orders
+                .where((po) => po.status.toLowerCase() == 'order')
+                .length;
+            final invoicePO = provider.orders
+                .where((po) => po.status.toLowerCase() == 'invoice')
                 .length;
             final paidPO = provider.orders
                 .where((po) => po.status.toLowerCase() == 'paid')
@@ -119,10 +122,18 @@ class _DashboardPageState extends State<DashboardPage> {
             // --- urutkan pending dulu + id desc ---
             final sortedOrders = [...provider.orders];
             sortedOrders.sort((a, b) {
-              if (a.status.toLowerCase() == 'pending' &&
-                  b.status.toLowerCase() != 'pending') return -1;
-              if (a.status.toLowerCase() != 'pending' &&
-                  b.status.toLowerCase() == 'pending') return 1;
+              String sa = a.status.toLowerCase();
+              String sb = b.status.toLowerCase();
+
+              // Prioritas status "order"
+              if (sa == 'order' && sb != 'order') return -1;
+              if (sa != 'order' && sb == 'order') return 1;
+
+              // Prioritas status "invoice"
+              if (sa == 'invoice' && sb != 'invoice') return -1;
+              if (sa != 'invoice' && sb == 'invoice') return 1;
+
+              // Kalau sama2 order/invoice/atau status lain, urutkan berdasarkan id desc
               return b.id.compareTo(a.id);
             });
 
@@ -151,9 +162,18 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       Expanded(
                         child: _buildSummaryCard(
-                          title: "Pending",
-                          value: pendingPO.toString(),
+                          title: "Order",
+                          value: orderPO.toString(),
                           color: Colors.orange,
+                          icon: Icons.pending_actions,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSummaryCard(
+                          title: "Invoice",
+                          value: invoicePO.toString(),
+                          color: Colors.blue,
                           icon: Icons.pending_actions,
                         ),
                       ),
@@ -162,7 +182,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: _buildSummaryCard(
                           title: "Paid",
                           value: paidPO.toString(),
-                          color: Colors.blueAccent,
+                          color: Colors.green,
                           icon: Icons.list_alt,
                         ),
                       ),
@@ -198,10 +218,12 @@ class _DashboardPageState extends State<DashboardPage> {
                           DropdownMenuItem(
                               value: "Semua", child: Text("Semua")),
                           DropdownMenuItem(
-                              value: "Pending", child: Text("Pending")),
+                              value: "order", child: Text("order")),
+                          DropdownMenuItem(
+                              value: "invoice", child: Text("invoice")),
                           DropdownMenuItem(value: "Paid", child: Text("Paid")),
                           DropdownMenuItem(
-                              value: "Cancelled", child: Text("Cancelled")),
+                              value: "cancel", child: Text("cancel")),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -276,12 +298,20 @@ class _DashboardPageState extends State<DashboardPage> {
                                           color: po.status.toLowerCase() ==
                                                   "paid"
                                               ? Colors.green.withOpacity(0.15)
-                                              : (po.status.toLowerCase() ==
-                                                      "pending"
+                                              : (po
+                                                          .status
+                                                          .toLowerCase() ==
+                                                      "order"
                                                   ? Colors.orange
                                                       .withOpacity(0.15)
-                                                  : Colors.red
-                                                      .withOpacity(0.15)),
+                                                  : (po
+                                                              .status
+                                                              .toLowerCase() ==
+                                                          "invoice"
+                                                      ? Colors.blue
+                                                          .withOpacity(0.15)
+                                                      : Colors.red
+                                                          .withOpacity(0.15))),
                                           borderRadius:
                                               BorderRadius.circular(20),
                                           border: Border.all(
@@ -289,9 +319,12 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     "paid"
                                                 ? Colors.green
                                                 : (po.status.toLowerCase() ==
-                                                        "pending"
+                                                        "order"
                                                     ? Colors.orange
-                                                    : Colors.red),
+                                                    : (po.status.toLowerCase() ==
+                                                            "invoice"
+                                                        ? Colors.blue
+                                                        : Colors.red)),
                                             width: 1,
                                           ),
                                         ),
@@ -302,17 +335,23 @@ class _DashboardPageState extends State<DashboardPage> {
                                               po.status.toLowerCase() == "paid"
                                                   ? Icons.check_circle
                                                   : (po.status.toLowerCase() ==
-                                                          "pending"
-                                                      ? Icons.access_time
-                                                      : Icons.cancel),
+                                                          "order"
+                                                      ? Icons.shopping_cart
+                                                      : (po.status.toLowerCase() ==
+                                                              "invoice"
+                                                          ? Icons.receipt_long
+                                                          : Icons.cancel)),
                                               size: 16,
                                               color: po.status.toLowerCase() ==
                                                       "paid"
                                                   ? Colors.green
                                                   : (po.status.toLowerCase() ==
-                                                          "pending"
+                                                          "order"
                                                       ? Colors.orange
-                                                      : Colors.red),
+                                                      : (po.status.toLowerCase() ==
+                                                              "invoice"
+                                                          ? Colors.blue
+                                                          : Colors.red)),
                                             ),
                                             const SizedBox(width: 6),
                                             Text(
@@ -323,9 +362,12 @@ class _DashboardPageState extends State<DashboardPage> {
                                                         "paid"
                                                     ? Colors.green[800]
                                                     : (po.status.toLowerCase() ==
-                                                            "pending"
+                                                            "order"
                                                         ? Colors.orange[800]
-                                                        : Colors.red[800]),
+                                                        : (po.status.toLowerCase() ==
+                                                                "invoice"
+                                                            ? Colors.blue[800]
+                                                            : Colors.red[800])),
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 13,
                                                 letterSpacing: 0.5,
@@ -386,10 +428,10 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: color.withOpacity(0.2),
-              child: Icon(icon, color: color),
-            ),
+            // CircleAvatar(
+            //   backgroundColor: color.withOpacity(0.2),
+            //   child: Icon(icon, color: color),
+            // ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

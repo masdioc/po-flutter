@@ -21,7 +21,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
   String? userRole;
   late List<TextEditingController> buyControllers;
   late List<TextEditingController> sellControllers;
-
+  bool _isLoading = false;
   @override
   void initState() {
     super.initState();
@@ -40,6 +40,47 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                 ? e.priceSell.toInt().toString()
                 : e.priceSell.toString()))
         .toList();
+  }
+
+  Future<void> _saveChangesAsInvoice() async {
+    _applyChangesToItems(); // pastikan harga & total sudah terupdate
+
+    final payload = {
+      "supplier_id": widget.po.supplierId,
+      "order_number": widget.po.orderNumber,
+      "order_date": widget.po.orderDate,
+      "status": 'invoice',
+      "items": widget.po.items.map((item) => item.toJson()).toList(),
+    };
+
+    setState(() => _isLoading = true);
+
+    try {
+      final provider =
+          Provider.of<PurchaseOrderProvider>(context, listen: false);
+
+      // update ke server
+      await provider.updatePOOrder(context, widget.po.id, payload);
+
+      await provider.fetchOrders(
+          context); // update status lokal halaman detail agar tombol hilang
+      setState(() {
+        widget.po.status = 'invoice';
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PO berhasil diperbarui')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Gagal update PO: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _loadUserRole() async {
@@ -265,7 +306,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
             //   ),
             // ),
 
-            if (userRole == "mitra")
+            if (userRole == "mitra" && widget.po.status == "order")
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -275,29 +316,86 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                         borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () async {
+                    // Terapkan perubahan lokal dulu agar controller terbaru terbaca
                     _applyChangesToItems();
+
+                    // Cek apakah ada harga beli atau harga jual yang masih 0
+                    final hasZeroPrice = widget.po.items.any(
+                        (item) => item.priceBuy <= 0 || item.priceSell <= 0);
+
+                    if (hasZeroPrice) {
+                      // Tampilkan snackbar / alert
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Pastikan semua harga tidak 0!')),
+                      );
+                      return; // hentikan proses
+                    }
+
+                    // Tampilkan dialog konfirmasi
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Konfirmasi'),
+                        content: const Text(
+                            'Apakah semua data sudah benar? Jika ya, status akan berubah menjadi Invoice / Tagihan.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Batal'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Ya, Ubah Status'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm != true) return;
 
                     final payload = {
                       "supplier_id": widget.po.supplierId,
                       "order_number": widget.po.orderNumber,
                       "order_date": widget.po.orderDate,
-                      "status": widget.po.status,
+                      "status": 'invoice',
                       "items":
                           widget.po.items.map((item) => item.toJson()).toList(),
                     };
 
-                    try {
-                      await Provider.of<PurchaseOrderProvider>(context,
-                              listen: false)
-                          .updatePOOrder(context, widget.po.id, payload);
+                    setState(() => _isLoading = true);
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('PO berhasil diperbarui')),
-                      );
+                    try {
+                      final provider = Provider.of<PurchaseOrderProvider>(
+                          context,
+                          listen: false);
+
+                      // Update di server
+                      await provider.updatePOOrder(
+                          context, widget.po.id, payload);
+
+                      // Update lokal provider
+                      provider.updateLocalPO(int.parse(widget.po.id), payload);
+
+                      // Update objek lokal agar UI detail page ikut berubah
+                      setState(() {
+                        widget.po.status = 'invoice';
+                      });
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('PO berhasil diperbarui')),
+                        );
+                      }
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Gagal update PO: $e')),
-                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Gagal update PO: $e')),
+                        );
+                      }
+                    } finally {
+                      if (mounted) setState(() => _isLoading = false);
                     }
                   },
                   child: const Text("💾 Simpan Perubahan",
@@ -308,7 +406,8 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
           ],
         ),
       ),
-      bottomNavigationBar: (widget.po.status != "paid" && userRole == "finance")
+      bottomNavigationBar: (widget.po.status == "invoice" &&
+              userRole == "finance")
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(12),
