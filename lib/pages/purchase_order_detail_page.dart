@@ -1,11 +1,18 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:po_app/config/app_config.dart';
 import 'package:po_app/pages/payment_page.dart';
 import 'package:po_app/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../models/purchase_order.dart';
 import '../providers/purchase_order_provider.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
+import 'dart:io';
 
 class PurchaseOrderDetailPage extends StatefulWidget {
   final PurchaseOrder po;
@@ -42,44 +49,65 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
         .toList();
   }
 
-  Future<void> _saveChangesAsInvoice() async {
-    _applyChangesToItems(); // pastikan harga & total sudah terupdate
-
-    final payload = {
-      "supplier_id": widget.po.supplierId,
-      "order_number": widget.po.orderNumber,
-      "order_date": widget.po.orderDate,
-      "status": 'invoice',
-      "items": widget.po.items.map((item) => item.toJson()).toList(),
-    };
-
-    setState(() => _isLoading = true);
-
+  Future<void> _showPaymentProof(int id) async {
     try {
-      final provider =
-          Provider.of<PurchaseOrderProvider>(context, listen: false);
+      final dir = await getApplicationDocumentsDirectory();
+      final savePath = "${dir.path}/payment_proof_$id.jpg";
+      final dio = Dio();
+      String baseUrl = AppConfig.apiUrl;
+      final response = await dio.get("$baseUrl/payment-proof/$id");
 
-      // update ke server
-      await provider.updatePOOrder(context, widget.po.id, payload);
+      if (response.statusCode == 200) {
+        final url = response.data['url'];
 
-      await provider.fetchOrders(
-          context); // update status lokal halaman detail agar tombol hilang
-      setState(() {
-        widget.po.status = 'invoice';
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PO berhasil diperbarui')),
+        await dio.download(
+          url,
+          savePath,
+          onReceiveProgress: (count, total) {
+            print("Progress: ${(count / total * 100).toStringAsFixed(0)}%");
+          },
         );
+
+        await OpenFilex.open(savePath); // buka PDF
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Gagal update PO: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal tampilkan bukti pembayaran')),
+        );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _downloadInvoice(int id) async {
+    try {
+      String baseUrl = AppConfig.apiUrl;
+      final dir = await getApplicationDocumentsDirectory();
+      final savePath = "${dir.path}/invoice_po.pdf";
+      print(baseUrl);
+      final dio = Dio();
+
+      final response = await dio.get(
+        "$baseUrl/invoice/$id", // ganti sesuai domain API
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      final file = File(savePath);
+      await file.writeAsBytes(response.data);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invoice berhasil diunduh: $savePath')),
+        );
+      }
+
+      await OpenFilex.open(savePath);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal download invoice: $e')),
+        );
+      }
     }
   }
 
@@ -305,6 +333,27 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
             //     ],
             //   ),
             // ),
+            // if (widget.po.status == "paid")
+            //   SizedBox(
+            //     width: double.infinity,
+            //     height: 50,
+            //     child: ElevatedButton.icon(
+            //       icon: const Icon(Icons.receipt_long),
+            //       label: const Text(
+            //         "🧾 Tampilkan Bukti Pembayaran",
+            //         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            //       ),
+            //       style: ElevatedButton.styleFrom(
+            //         backgroundColor: Colors.blue,
+            //         shape: RoundedRectangleBorder(
+            //           borderRadius: BorderRadius.circular(12),
+            //         ),
+            //       ),
+            //       onPressed: () async {
+            //         await _showPaymentProof(int.parse(widget.po.id));
+            //       },
+            //     ),
+            //   ),
 
             if (userRole == "mitra" && widget.po.status == "order")
               SizedBox(
@@ -406,43 +455,100 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
           ],
         ),
       ),
-      bottomNavigationBar: (widget.po.status == "invoice" &&
-              userRole == "finance")
+      bottomNavigationBar: (widget.po.status == "invoice" ||
+              widget.po.status == "paid")
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      // backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Tampilkan tombol Bayar kalau status = invoice & role = finance
+                    if (widget.po.status == "invoice" && userRole == "finance")
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () async {
+                            final poAfterPayment = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    PaymentPage(po: widget.po),
+                              ),
+                            );
+
+                            if (poAfterPayment != null) {
+                              setState(() {
+                                widget.po.status = poAfterPayment.status;
+                              });
+
+                              Navigator.pop(context, poAfterPayment);
+                            }
+                          },
+                          child: const Text(
+                            "💳 Bayar Sekarang",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+
+                    // Tombol download invoice selalu ada kalau status invoice/paid
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.picture_as_pdf),
+                        label: const Text(
+                          "📄 Download Invoice",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () async {
+                          await _downloadInvoice(int.parse(widget.po.id));
+                        },
                       ),
                     ),
-                    onPressed: () async {
-                      final poAfterPayment = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PaymentPage(po: widget.po),
+                    const SizedBox(height: 8),
+
+                    // Tombol tampilkan bukti pembayaran kalau status = paid
+                    if (widget.po.status == "paid")
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.receipt_long),
+                          label: const Text(
+                            "🧾 Tampilkan Bukti Pembayaran",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () async {
+                            await _showPaymentProof(int.parse(widget.po.id));
+                          },
                         ),
-                      );
-
-                      if (poAfterPayment != null) {
-                        setState(() {
-                          widget.po.status = poAfterPayment.status;
-                        });
-
-                        Navigator.pop(context, poAfterPayment);
-                      }
-                    },
-                    child: const Text(
-                      "💳 Bayar Sekarang",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
+                      ),
+                  ],
                 ),
               ),
             )

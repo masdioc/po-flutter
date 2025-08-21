@@ -1,16 +1,19 @@
 import 'dart:async';
-
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/update_provider.dart';
 import 'login_page.dart';
-import 'main_page.dart'; // ganti sesuai halaman utama setelah login
-import '../services/update_checker.dart'; // pastikan file UpdateChecker ada
-import 'package:url_launcher/url_launcher.dart'; // ✅ buat buka PlayStore
+import 'main_page.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:install_plugin/install_plugin.dart';
 
 class SplashScreen extends StatefulWidget {
-  final bool showUpdate; // ✅ tambahin properti
-  const SplashScreen({super.key, this.showUpdate = false}); // ✅ default false
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -20,27 +23,28 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    if (!widget.showUpdate) {
-      Timer(const Duration(seconds: 3), () {
-        _checkAuth();
-      });
-    }
-    print(widget.showUpdate);
+    _initApp();
+  }
+
+  Future<void> _initApp() async {
+    final updateProvider = Provider.of<UpdateProvider>(context, listen: false);
+
+    // cek update dulu
+    await updateProvider.checkUpdate();
+
+    if (!mounted) return;
+
+    // kalau perlu update → jangan lanjut auth
+    if (updateProvider.neededUpdate) return;
+
+    _checkAuth();
   }
 
   Future<void> _checkAuth() async {
-    // if (widget.showUpdate) return;
-
-    print(widget.showUpdate);
     final auth = Provider.of<AuthProvider>(context, listen: false);
-
-    // Cek apakah user sudah login sebelumnya
     await auth.tryAutoLogin();
 
-    // Simulasi loading 2 detik
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return; // ✅ biar aman kalau widget disposed
+    if (!mounted) return;
 
     if (auth.isLoggedIn) {
       Navigator.pushReplacement(
@@ -55,18 +59,78 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  Future<void> _launchUpdateUrl() async {
-    const url =
-        "https://play.google.com/store/apps/details?id=com.example.app"; // ✅ sesuaikan
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  // Future<void> _launchUpdateUrl(String url) async {
+  //   if (url.isEmpty) return;
+  //   if (await canLaunchUrl(Uri.parse(url))) {
+  //     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  //   }
+  // }
+  // Future<void> _launchUpdateUrl(String url) async {
+  //   if (url.isEmpty) return;
+  //   final uri = Uri.parse(url);
+
+  //   try {
+  //     await launchUrl(
+  //       uri,
+  //       mode: LaunchMode.externalApplication, // buka browser default
+  //     );
+  //   } catch (e) {
+  //     debugPrint("Gagal buka url: $e");
+  //     // fallback ke WebView dalam aplikasi
+  //     await launchUrl(uri, mode: LaunchMode.inAppWebView);
+  //   }
+  // }
+  Future<void> _downloadAndInstallApk(BuildContext context, String url) async {
+    if (url.isEmpty) return;
+
+    try {
+      // lokasi simpan APK -> Download folder
+      final dir = Directory('/storage/emulated/0/Download');
+      if (!dir.existsSync()) {
+        dir.createSync(recursive: true);
+      }
+      final savePath = "${dir.path}/update_app.apk";
+
+      // download dengan Dio
+      final dio = Dio();
+      await dio.download(
+        url,
+        savePath,
+        onReceiveProgress: (count, total) {
+          final progress = (count / total * 100).toStringAsFixed(0);
+          debugPrint("Download progress: $progress%");
+        },
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Download selesai, membuka installer...")),
+        );
+      }
+
+      // ✅ pakai named parameter appId
+      await InstallPlugin.installApk(
+        savePath,
+        appId: 'com.example.app', // ganti sesuai package name
+      ).catchError((e) {
+        debugPrint("Install error: $e");
+      });
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal download APK: $e")),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.showUpdate) {
-      // ✅ kalau update diperlukan
+    final updateProvider = Provider.of<UpdateProvider>(context);
+
+    if (updateProvider.neededUpdate) {
+      // kalau butuh update
       return Scaffold(
         body: Center(
           child: Column(
@@ -80,8 +144,13 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: _launchUpdateUrl,
-                child: const Text("Update Sekarang"),
+                onPressed: () {
+                  _downloadAndInstallApk(
+                    context,
+                    updateProvider.updateUrl,
+                  );
+                },
+                child: const Text("Update Aplikasi"),
               ),
             ],
           ),
@@ -89,7 +158,7 @@ class _SplashScreenState extends State<SplashScreen> {
       );
     }
 
-    // ✅ splash default kalau gak ada update
+    // splash default
     return Scaffold(
       body: Center(
         child: Column(

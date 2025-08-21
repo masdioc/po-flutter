@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../pages/dashboard_page.dart';
 import '../pages/purchase_order_page.dart';
-import '../pages/profile_page.dart';
+import 'profile_page.dart';
 import '../pages/product_list.dart'; // <-- untuk manajemen produk
 import '../providers/purchase_order_provider.dart';
 import '../theme/app_colors.dart';

@@ -194,11 +194,14 @@ class _PoSummaryPageState extends State<PoSummaryPage> {
                   const SizedBox(height: 12),
 
                   // Chart Summary
-                  ChartSummary(
-                      total: totalPO,
-                      order: orderPO,
-                      invoice: invoicePO,
-                      paid: paidPO),
+                  SizedBox(
+                    height: 230,
+                    child: ChartSummary(
+                        total: totalPO,
+                        order: orderPO,
+                        invoice: invoicePO,
+                        paid: paidPO),
+                  ),
 
                   const SizedBox(height: 24),
 

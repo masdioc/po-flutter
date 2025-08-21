@@ -76,7 +76,13 @@ class _PaymentPageState extends State<PaymentPage> {
 
   Future<void> _processPayment() async {
     if (selectedMethod == null) return;
-
+    // ✅ Validasi proofFile wajib ada kalau metode transfer
+    if (selectedMethod == "transfer" && proofFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Bukti pembayaran wajib diupload!")),
+      );
+      return;
+    }
     setState(() => isLoading = true);
 
     try {
