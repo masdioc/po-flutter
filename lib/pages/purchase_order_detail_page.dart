@@ -28,6 +28,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
   String? userRole;
   late List<TextEditingController> buyControllers;
   late List<TextEditingController> sellControllers;
+  late TextEditingController dueDateController;
   bool _isLoading = false;
   @override
   void initState() {
@@ -47,6 +48,10 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                 ? e.priceSell.toInt().toString()
                 : e.priceSell.toString()))
         .toList();
+    // init controller due_date
+    dueDateController = TextEditingController(
+      text: widget.po.dueDate ?? '', // ambil dari server
+    );
   }
 
   Future<void> _showPaymentProof(int id) async {
@@ -73,7 +78,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal tampilkan bukti pembayaran')),
+          const SnackBar(content: Text('Gagal tampilkan bukti pembayaran')),
         );
       }
     }
@@ -139,7 +144,17 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
-
+    // Hitung tanggal jatuh tempo untuk mitra
+    DateTime? dueDate;
+    if (userRole == "mitra") {
+      try {
+        final poDate = DateFormat('yyyy-MM-dd').parse(widget.po.orderDate);
+        dueDate =
+            poDate.add(const Duration(days: 7)); // misal 7 hari dari order date
+      } catch (_) {
+        dueDate = null;
+      }
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text("Detail PO ${widget.po.orderNumber}"),
@@ -174,28 +189,91 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                           ),
                     ),
                     const SizedBox(height: 12),
+
+                    // No. PO
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("No. PO:",
+                        const Text("No. PO:",
                             style: TextStyle(fontWeight: FontWeight.w600)),
                         Text(widget.po.orderNumber),
                       ],
                     ),
                     const SizedBox(height: 8),
+
+                    // Tanggal PO
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Tanggal:",
+                        const Text("Tanggal Order:",
                             style: TextStyle(fontWeight: FontWeight.w600)),
                         Text(widget.po.orderDate),
                       ],
                     ),
                     const SizedBox(height: 8),
+
+                    // Tanggal Jatuh Tempo
+                    // Tanggal Jatuh Tempo
+                    if (dueDateController.text.isNotEmpty)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Tgl. Jatuh Tempo:",
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          SizedBox(
+                            width: 150, // lebar untuk field/tanggal
+                            child: userRole == "mitra"
+                                ? TextField(
+                                    controller: dueDateController,
+                                    readOnly: true,
+                                    textAlign: TextAlign.right,
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      isDense: true,
+                                      suffixIcon: Icon(Icons.calendar_today),
+                                    ),
+                                    onTap: () async {
+                                      DateTime initialDate = DateTime.tryParse(
+                                              dueDateController.text) ??
+                                          DateTime.now();
+                                      DateTime firstDate = DateTime.now();
+                                      DateTime lastDate = DateTime(2100);
+
+                                      DateTime? picked = await showDatePicker(
+                                        context: context,
+                                        initialDate: initialDate,
+                                        firstDate: firstDate,
+                                        lastDate: lastDate,
+                                      );
+
+                                      if (picked != null) {
+                                        dueDateController.text =
+                                            DateFormat('yyyy-MM-dd')
+                                                .format(picked);
+                                        setState(() {});
+                                      }
+                                    },
+                                  )
+                                : Text(
+                                    dueDateController.text,
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500),
+                                    textAlign: TextAlign.right,
+                                  ),
+                          ),
+                        ],
+                      ),
+
+                    const SizedBox(height: 8),
+
+                    // Total Harga Jual
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Total Harga Jual:",
+                        const Text("Total Harga Jual:",
                             style: TextStyle(fontWeight: FontWeight.w600)),
                         Text(
                           currencyFormatter.format(
@@ -407,6 +485,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                       "supplier_id": widget.po.supplierId,
                       "order_number": widget.po.orderNumber,
                       "order_date": widget.po.orderDate,
+                      "due_date": dueDateController.text,
                       "status": 'invoice',
                       "items":
                           widget.po.items.map((item) => item.toJson()).toList(),

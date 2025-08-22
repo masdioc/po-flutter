@@ -1,6 +1,6 @@
 name: po_app
 description: Application for PO management.
-version: 1.6.0+3
+version: 1.8.0+3
 publish_to: 'none'
 
 environment:
@@ -24,6 +24,7 @@ dependencies:
   path_provider: ^2.0.11
   open_filex: ^4.3.2
   install_plugin: ^2.1.0
+  permission_handler: ^11.3.1 
 
 dev_dependencies:
   flutter_test:

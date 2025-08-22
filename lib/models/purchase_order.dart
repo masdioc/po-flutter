@@ -95,6 +95,7 @@ class PurchaseOrder {
   final Supplier? supplier;
   List<PurchaseOrderItem> items;
   final List<Payment> payments;
+  String? dueDate;
 
   PurchaseOrder({
     required this.id,
@@ -106,6 +107,7 @@ class PurchaseOrder {
     this.supplier,
     required this.items,
     required this.payments,
+    required this.dueDate,
   });
 
   bool get isPaid {
@@ -130,6 +132,7 @@ class PurchaseOrder {
       payments: json['payments'] != null
           ? List<Payment>.from(json['payments'].map((x) => Payment.fromJson(x)))
           : [],
+      dueDate: json['due_date'] ?? '',
     );
   }
 }

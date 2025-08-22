@@ -11,6 +11,7 @@ import 'login_page.dart';
 import 'main_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:install_plugin/install_plugin.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -80,18 +81,38 @@ class _SplashScreenState extends State<SplashScreen> {
   //     await launchUrl(uri, mode: LaunchMode.inAppWebView);
   //   }
   // }
+
   Future<void> _downloadAndInstallApk(BuildContext context, String url) async {
     if (url.isEmpty) return;
 
     try {
-      // lokasi simpan APK -> Download folder
-      final dir = Directory('/storage/emulated/0/Download');
+      // 1️⃣ Minta izin storage
+      var status = await Permission.storage.request();
+      if (!status.isGranted) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Izin storage ditolak")),
+          );
+        }
+        return;
+      }
+
+      // 2️⃣ Lokasi simpan APK -> folder aplikasi sendiri (lebih aman)
+      Directory dir;
+      if (Platform.isAndroid) {
+        dir = (await getExternalStorageDirectory())!;
+      } else {
+        dir = await getApplicationDocumentsDirectory();
+      }
+
+      final savePath = "${dir.path}/update_app.apk";
+
+      // pastikan folder ada
       if (!dir.existsSync()) {
         dir.createSync(recursive: true);
       }
-      final savePath = "${dir.path}/update_app.apk";
 
-      // download dengan Dio
+      // 3️⃣ Download APK
       final dio = Dio();
       await dio.download(
         url,
@@ -109,12 +130,17 @@ class _SplashScreenState extends State<SplashScreen> {
         );
       }
 
-      // ✅ pakai named parameter appId
+      // 4️⃣ Install APK
       await InstallPlugin.installApk(
         savePath,
-        appId: 'com.example.app', // ganti sesuai package name
+        appId: 'com.example.po_app', // ganti dengan package name kamu
       ).catchError((e) {
         debugPrint("Install error: $e");
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Install APK gagal: $e")),
+          );
+        }
       });
     } catch (e) {
       if (context.mounted) {
